@@ -16,16 +16,16 @@
 	extern char **environ;
 #endif
 
-static void redirect_fd(int from_fd, int to_fd, const char *msg) {
-	if (from_fd > -1 && from_fd != to_fd) {
-		close(to_fd);
+static void pipes_redirect_fd(int oldfd, int newfd, const char *msg) {
+	if (oldfd > -1 && oldfd != newfd) {
+		close(newfd);
 
-		if (dup2(from_fd, to_fd) == -1) {
+		if (dup2(oldfd, newfd) == -1) {
 			perror(msg);
 			exit(EXIT_FAILURE);
 		}
 
-		close(from_fd);
+		close(oldfd);
 	}
 }
 
@@ -34,10 +34,11 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	int outfd = -1;
 	int errfd = -1;
 
-	int inaction  = pipes->infd;
-	int outaction = pipes->outfd;
-	int erraction = pipes->errfd;
+	const int inaction  = pipes->infd;
+	const int outaction = pipes->outfd;
+	const int erraction = pipes->errfd;
 
+	// stdin
 	if (inaction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
 		if (pipe(pair) == -1) {
@@ -62,7 +63,8 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		errno = EINVAL;
 		goto error;
 	}
-	
+
+	// stdout
 	if (outaction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
 		if (pipe(pair) == -1) {
@@ -87,7 +89,8 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		errno = EINVAL;
 		goto error;
 	}
-	
+
+	// stderr
 	if (erraction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
 		if (pipe(pair) == -1) {
@@ -133,9 +136,9 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 
 	if (pid == 0) {
 		// child
-		redirect_fd(infd,  STDIN_FILENO,  "redirecting stdin");
-		redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
-		redirect_fd(errfd, STDERR_FILENO, "redirecting stderr");
+		pipes_redirect_fd(infd,  STDIN_FILENO,  "redirecting stdin");
+		pipes_redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
+		pipes_redirect_fd(errfd, STDERR_FILENO, "redirecting stderr");
 
 		if (envp) {
 			environ = (char**)envp;
