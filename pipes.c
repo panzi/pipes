@@ -269,7 +269,7 @@ error:
 int pipes_close_chain(struct pipes_chain chain[]) {
 	int status = 0;
 
-	for (struct pipes_chain *ptr = chain; ptr; ++ ptr) {
+	for (struct pipes_chain *ptr = chain; ptr->argv; ++ ptr) {
 		if (ptr->pipes.infd > -1) {
 			if (close(ptr->pipes.infd) != 0) {
 				status = -1;
@@ -298,7 +298,7 @@ int pipes_close_chain(struct pipes_chain chain[]) {
 int pipes_kill_chain(struct pipes_chain chain[], int sig) {
 	int status = 0;
 
-	for (struct pipes_chain *ptr = chain; ptr; ++ ptr) {
+	for (struct pipes_chain *ptr = chain; ptr->argv; ++ ptr) {
 		if (ptr->pipes.pid > -1) {
 			if (kill(ptr->pipes.pid, sig) != 0) {
 				status = -1;

@@ -57,5 +57,7 @@ int main(int argc, const char* argv[]) {
 
 	printf("status of last in chain: %d\n", status);
 
+	pipes_close_chain(chain);
+
 	return 0;
 }
