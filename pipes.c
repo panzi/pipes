@@ -128,8 +128,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	pid_t pid = fork();
 
 	if (pid == -1) {
-		if (infd > 0) close(infd);
-		return -1;
+		goto error;
 	}
 
 	if (pid == 0) {
@@ -205,18 +204,36 @@ int pipes_close(struct pipes* pipes) {
 }
 
 int pipes_open_chain(struct pipes_chain chain[]) {
-	if (chain == NULL || chain[0].argv == NULL) {
-		errno = EINVAL;
-		return -1;
+	struct pipes_chain *ptr  = chain;
+	struct pipes_chain *last = chain;
+
+	for (; ptr->argv; ++ ptr) {
+		ptr->pipes.pid = -1;
 	}
 
-	struct pipes_chain *ptr = chain;
+	if (chain == NULL || chain[0].argv == NULL) {
+		errno = EINVAL;
+		goto error;
+	}
+
+	ptr = chain;
+
+	for (++ ptr; ptr->argv; ++ ptr) {
+		if (ptr->pipes.infd == PIPES_PIPE) {
+			if (last->pipes.outfd < 0 && last->pipes.outfd != PIPES_PIPE) {
+				errno = EINVAL;
+				goto error;
+			}
+		}
+		last = ptr;
+	}
+
+	ptr  = chain;
+	last = chain;
 
 	if (pipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 		goto error;
 	}
-
-	struct pipes_chain *last = ptr;
 
 	for (++ ptr; ptr->argv; ++ ptr) {
 		if (ptr->pipes.infd == PIPES_PIPE) {
