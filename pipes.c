@@ -9,6 +9,13 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
+#ifdef __APPLE__
+#	include <crt_externs.h>
+#	define environ (*_NSGetEnviron())
+#else
+	extern char **environ;
+#endif
+
 static void redirect_fd(int from_fd, int to_fd, const char *msg) {
 	if (from_fd > -1 && from_fd != to_fd) {
 		close(to_fd);
@@ -22,7 +29,7 @@ static void redirect_fd(int from_fd, int to_fd, const char *msg) {
 	}
 }
 
-int pipes_open(char const *const argv[], struct pipes* pipes) {
+int pipes_open(char const *const argv[], char const *const envp[], struct pipes* pipes) {
 	int infd  = -1;
 	int outfd = -1;
 	int errfd = -1;
@@ -131,6 +138,10 @@ int pipes_open(char const *const argv[], struct pipes* pipes) {
 		redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
 		redirect_fd(errfd, STDERR_FILENO, "redirecting stderr");
 
+		if (envp) {
+			environ = (char**)envp;
+		}
+
 		if (execvp(argv[0], (char * const*)argv) == -1) {
 			perror(argv[0]);
 			exit(EXIT_FAILURE);
@@ -150,26 +161,47 @@ int pipes_open(char const *const argv[], struct pipes* pipes) {
 error:
 	pipes->pid = -1;
 
+	int errnum = errno;
+
 	if (infd  > -1) close(infd);
 	if (outfd > -1) close(outfd);
 	if (errfd > -1) close(errfd);
 
+	pipes_close(pipes);
+
+	if (errnum != 0) {
+		errno = errnum;
+	}
+
+	return -1;
+}
+
+int pipes_close(struct pipes* pipes) {
+	int status = 0;
+
 	if (pipes->infd  > -1) {
-		close(pipes->infd);
+		if (close(pipes->infd) != 0) {
+			status = -1;
+		}
 		pipes->infd = -1;
+		status = -1;
 	}
 
 	if (pipes->outfd > -1) {
-		close(pipes->outfd);
+		if (close(pipes->outfd) != 0) {
+			status = -1;
+		}
 		pipes->outfd = -1;
 	}
 
 	if (pipes->errfd > -1) {
-		close(pipes->errfd);
+		if (close(pipes->errfd) != 0) {
+			status = -1;
+		}
 		pipes->errfd = -1;
 	}
 
-	return -1;
+	return status;
 }
 
 int pipes_open_chain(struct pipes_chain chain[]) {
@@ -180,21 +212,19 @@ int pipes_open_chain(struct pipes_chain chain[]) {
 
 	struct pipes_chain *ptr = chain;
 
-	if (chain[1].argv != NULL) {
-		ptr->pipes.outfd = PIPES_PIPE;
-	}
-
-	if (pipes_open(ptr->argv, &ptr->pipes) == -1) {
+	if (pipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 		goto error;
 	}
 
 	struct pipes_chain *last = ptr;
 
 	for (++ ptr; ptr->argv; ++ ptr) {
-		ptr->pipes.infd   = last->pipes.outfd;
-		last->pipes.outfd = -1;
+		if (ptr->pipes.infd == PIPES_PIPE) {
+			ptr->pipes.infd   = last->pipes.outfd;
+			last->pipes.outfd = -1;
+		}
 
-		if (pipes_open(ptr->argv, &ptr->pipes) == -1) {
+		if (pipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 			goto error;
 		}
 
@@ -205,26 +235,59 @@ int pipes_open_chain(struct pipes_chain chain[]) {
 
 error:
 
-	for (ptr = chain; ptr; ++ ptr) {
+	(void)0;
+
+	int errnum = errno;
+
+	pipes_close_chain(chain);
+	pipes_kill_chain(chain, SIGTERM);
+
+	if (errnum != 0) {
+		errno = errnum;
+	}
+
+	return -1;
+}
+
+int pipes_close_chain(struct pipes_chain chain[]) {
+	int status = 0;
+
+	for (struct pipes_chain *ptr = chain; ptr; ++ ptr) {
 		if (ptr->pipes.infd > -1) {
-			close(ptr->pipes.infd);
+			if (close(ptr->pipes.infd) != 0) {
+				status = -1;
+			}
 			ptr->pipes.infd = -1;
 		}
 
 		if (ptr->pipes.outfd > -1) {
-			close(ptr->pipes.outfd);
+			if (close(ptr->pipes.outfd) != 0) {
+				status = -1;
+			}
 			ptr->pipes.outfd = -1;
 		}
 
 		if (ptr->pipes.errfd > -1) {
-			close(ptr->pipes.errfd);
+			if (close(ptr->pipes.errfd) != 0) {
+				status = -1;
+			}
 			ptr->pipes.errfd = -1;
-		}
-
-		if (ptr->pipes.pid > -1) {
-			kill(ptr->pipes.pid, SIGTERM);
 		}
 	}
 
-	return -1;
+	return status;
+}
+
+int pipes_kill_chain(struct pipes_chain chain[], int sig) {
+	int status = 0;
+
+	for (struct pipes_chain *ptr = chain; ptr; ++ ptr) {
+		if (ptr->pipes.pid > -1) {
+			if (kill(ptr->pipes.pid, sig) != 0) {
+				status = -1;
+			}
+		}
+	}
+
+	return status;
 }

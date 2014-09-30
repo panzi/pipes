@@ -22,9 +22,9 @@ int main(int argc, const char* argv[]) {
 	char const* sed[]  = {"sed", "s/.*\\b\\(\\w\\+\\)(.*).*/\\1/", NULL};
 
 	struct pipes_chain chain[] = {
-		{ PIPES_IN(fd), grep },
-		{ PIPES_PASS,   sed  },
-		{ PIPES_PASS,   NULL }
+		{ PIPES_IN(fd), grep, NULL },
+		{ PIPES_PASS,   sed,  NULL },
+		{ PIPES_PASS,   NULL, NULL }
 	};
 
 	if (pipes_open_chain(chain) == -1) {
