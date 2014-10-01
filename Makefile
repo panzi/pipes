@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden
+CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden -g
 PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
@@ -48,7 +48,7 @@ clean:
 	   libpipes.so pipes_pic.o fpipes_pic.o redirect_pic.o
 
 install: lib
-	install libpipes.so "$(LIBDIR)"
+	install -s libpipes.so "$(LIBDIR)"
 	ln -s libpipes.so "$(LIBDIR)/libpipes.so.1"
 	ln -s libpipes.so.1 "$(LIBDIR)/libpipes.so.1.0.0"
 	install pipes.h fpipes.h export.h "$(INCDIR)/pipes"

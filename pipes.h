@@ -21,8 +21,13 @@ extern "C" {
 #define PIPES_IN(IN)   {-1, (IN),        PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_OUT(OUT) {-1, PIPES_PIPE,  (OUT),       PIPES_LEAVE}
 #define PIPES_ERR(ERR) {-1, PIPES_PIPE,  PIPES_LEAVE, (ERR)}
-#define PIPES_HEAD     {-1, PIPES_LEAVE, PIPES_PIPE,  PIPES_LEAVE}
-#define PIPES_TAIL     {-1, PIPES_PIPE,  PIPES_LEAVE, PIPES_LEAVE}
+#define PIPES_FIRST    {-1, PIPES_LEAVE, PIPES_PIPE,  PIPES_LEAVE}
+#define PIPES_LAST     {-1, PIPES_PIPE,  PIPES_LEAVE, PIPES_LEAVE}
+
+#define PIPES_GET_LAST(CHAIN) ((CHAIN)[(sizeof(CHAIN) / sizeof(struct pipes_chain))-2].pipes)
+#define PIPES_GET_IN(CHAIN)   ((CHAIN)[0].pipes.infd)
+#define PIPES_GET_OUT(CHAIN)  (PIPES_GET_LAST(CHAIN).outfd)
+#define PIPES_GET_ERR(CHAIN)  (PIPES_GET_LAST(CHAIN).errfd)
 
 struct pipes {
 	pid_t pid;

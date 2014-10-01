@@ -22,8 +22,13 @@ extern "C" {
 #define FPIPES_IN(IN)   {-1, (IN),         FPIPES_PIPE,  FPIPES_LEAVE}
 #define FPIPES_OUT(OUT) {-1, FPIPES_PIPE,  (OUT),        FPIPES_LEAVE}
 #define FPIPES_ERR(ERR) {-1, FPIPES_PIPE,  FPIPES_PIPE,  (ERR)}
-#define FPIPES_HEAD     {-1, FPIPES_LEAVE, FPIPES_PIPE,  FPIPES_LEAVE}
-#define FPIPES_TAIL     {-1, FPIPES_PIPE,  FPIPES_LEAVE, FPIPES_LEAVE}
+#define FPIPES_FIRS     {-1, FPIPES_LEAVE, FPIPES_PIPE,  FPIPES_LEAVE}
+#define FPIPES_LAST     {-1, FPIPES_PIPE,  FPIPES_LEAVE, FPIPES_LEAVE}
+
+#define FPIPES_GET_LAST(CHAIN) ((CHAIN)[(sizeof(CHAIN) / sizeof(struct fpipes_chain))-2].pipes)
+#define FPIPES_GET_IN(CHAIN)   ((CHAIN)[0].pipes.in)
+#define FPIPES_GET_OUT(CHAIN)  (FPIPES_GET_LAST(CHAIN).out)
+#define FPIPES_GET_ERR(CHAIN)  (FPIPES_GET_LAST(CHAIN).err)
 
 struct fpipes {
 	pid_t pid;

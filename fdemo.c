@@ -21,10 +21,12 @@ int main(int argc, const char* argv[]) {
 
 	char const* grep[] = {"grep", "^[^#]*\\w\\+(.*)", NULL};
 	char const* sed[]  = {"sed", "s/.*\\b\\(\\w\\+\\)(.*).*/\\1/", NULL};
+	char const* sort[] = {"sort", "-u", NULL};
 
 	struct fpipes_chain chain[] = {
 		{ FPIPES_IN(fp), grep, NULL },
 		{ FPIPES_PASS,   sed,  NULL },
+		{ FPIPES_PASS,   sort, NULL },
 		{ FPIPES_PASS,   NULL, NULL }
 	};
 
@@ -36,10 +38,10 @@ int main(int argc, const char* argv[]) {
 	char buf[BUFSIZ];
 
 	for (;;) {
-		size_t size = fread(buf, 1, BUFSIZ, chain[1].pipes.out);
+		size_t size = fread(buf, 1, BUFSIZ, FPIPES_GET_OUT(chain));
 
 		if (size == 0) {
-			if (ferror(chain[1].pipes.out)) {
+			if (ferror(FPIPES_GET_OUT(chain))) {
 				perror("read");
 				fpipes_close_chain(chain);
 				return 1;
@@ -55,7 +57,7 @@ int main(int argc, const char* argv[]) {
 	}
 
 	int status = 0;
-	if (waitpid(chain[1].pipes.pid, &status, 0) == -1) {
+	if (waitpid(FPIPES_GET_LAST(chain).pid, &status, 0) == -1) {
 		perror("waitpid");
 		fpipes_close_chain(chain);
 		return 1;

@@ -20,10 +20,12 @@ int main(int argc, const char* argv[]) {
 
 	char const* grep[] = {"grep", "^[^#]*\\w\\+(.*)", NULL};
 	char const* sed[]  = {"sed", "s/.*\\b\\(\\w\\+\\)(.*).*/\\1/", NULL};
+	char const* sort[] = {"sort", "-u", NULL};
 
 	struct pipes_chain chain[] = {
 		{ PIPES_IN(fd), grep, NULL },
 		{ PIPES_PASS,   sed,  NULL },
+		{ PIPES_PASS,   sort, NULL },
 		{ PIPES_PASS,   NULL, NULL }
 	};
 
@@ -35,7 +37,7 @@ int main(int argc, const char* argv[]) {
 	char buf[BUFSIZ];
 
 	for (;;) {
-		ssize_t size = read(chain[1].pipes.outfd, buf, BUFSIZ);
+		ssize_t size = read(PIPES_GET_OUT(chain), buf, BUFSIZ);
 
 		if (size == 0) break;
 		if (size < 0) {
@@ -52,7 +54,7 @@ int main(int argc, const char* argv[]) {
 	}
 
 	int status = 0;
-	if (waitpid(chain[1].pipes.pid, &status, 0) == -1) {
+	if (waitpid(PIPES_GET_LAST(chain).pid, &status, 0) == -1) {
 		perror("waitpid");
 		pipes_close_chain(chain);
 		return 1;
