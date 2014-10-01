@@ -1,4 +1,5 @@
 #define _POSIX_SOURCE
+#define _GNU_SOURCE
 
 #include "pipes.h"
 
@@ -17,6 +18,42 @@
 #endif
 
 void pipes_redirect_fd(int oldfd, int newfd, const char *msg);
+
+#ifndef P_tmpdir
+#	define P_tmpdir "/tmp"
+#endif
+
+#if defined(__linux__) && !defined(O_TMPFILE)
+#	include <linux/version.h>
+#	if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
+#		define O_TMPFILE (020000000 | O_DIRECTORY)
+#	endif
+#endif
+
+#ifdef O_TMPFILE
+#	define pipes_temp_fd() open(P_tmpdir, O_TMPFILE | O_RDWR, 0600)
+#else
+static int pipes_temp_fd() {
+	char name[L_tmpnam];
+
+	if (tmpnam(name) == NULL) {
+		return -1;
+	}
+
+	int fd = open(name, O_CREAT | O_RDWR, 0600);
+
+	if (fd < 0) {
+		return -1;
+	}
+
+	if (unlink(name) != 0) {
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+#endif
 
 int pipes_open(char const *const argv[], char const *const envp[], struct pipes* pipes) {
 	int infd  = -1;
@@ -48,6 +85,14 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		infd = inaction;
 		pipes->infd = -1;
 	}
+	else if (inaction == PIPES_TEMP) {
+		infd = pipes_temp_fd();
+		pipes->infd = infd;
+
+		if (infd < 0) {
+			goto error;
+		}
+	}
 	else if (inaction != PIPES_LEAVE) {
 		errno = EINVAL;
 		goto error;
@@ -73,6 +118,14 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	else if (outaction > -1) {
 		outfd = outaction;
 		pipes->outfd = -1;
+	}
+	else if (outaction == PIPES_TEMP) {
+		outfd = pipes_temp_fd();
+		pipes->outfd = outfd;
+
+		if (outfd < 0) {
+			goto error;
+		}
 	}
 	else if (outaction != PIPES_LEAVE) {
 		errno = EINVAL;
@@ -112,6 +165,14 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		errfd = erraction;
 		pipes->errfd = -1;
 	}
+	else if (erraction == PIPES_TEMP) {
+		errfd = pipes_temp_fd();
+		pipes->errfd = errfd;
+
+		if (errfd < 0) {
+			goto error;
+		}
+	}
 	else if (erraction != PIPES_LEAVE) {
 		errno = EINVAL;
 		goto error;
@@ -142,9 +203,9 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		// parent
 		pipes->pid = pid;
 
-		if (infd  > -1) close(infd);
-		if (outfd > -1) close(outfd);
-		if (errfd > -1) close(errfd);
+		if (inaction  != PIPES_TEMP && infd  > -1) close(infd);
+		if (outaction != PIPES_TEMP && outfd > -1) close(outfd);
+		if (erraction != PIPES_TEMP && errfd > -1) close(errfd);
 	}
 
 	return 0;
@@ -282,4 +343,50 @@ int pipes_kill_chain(struct pipes_chain chain[], int sig) {
 	}
 
 	return status;
+}
+
+int pipes_take_in(struct pipes_chain chain[]) {
+	if (chain[0].argv) {
+		int fd = chain[0].pipes.infd;
+		chain[0].pipes.infd = -1;
+		return fd;
+	}
+	else {
+		errno = EINVAL;
+		return -1;
+	}
+}
+
+int pipes_take_out(struct pipes_chain chain[]) {
+	struct pipes_chain *prev = chain;
+	for (struct pipes_chain *ptr = chain; ptr->argv; ++ ptr) {
+		prev = ptr;
+	}
+
+	if (prev->argv) {
+		int fd = prev->pipes.outfd;
+		prev->pipes.outfd = -1;
+		return fd;
+	}
+	else {
+		errno = EINVAL;
+		return -1;
+	}
+}
+
+int pipes_take_err(struct pipes_chain chain[]) {
+	struct pipes_chain *prev = chain;
+	for (struct pipes_chain *ptr = chain; ptr->argv; ++ ptr) {
+		prev = ptr;
+	}
+
+	if (prev->argv) {
+		int fd = prev->pipes.errfd;
+		prev->pipes.errfd = -1;
+		return fd;
+	}
+	else {
+		errno = EINVAL;
+		return -1;
+	}
 }

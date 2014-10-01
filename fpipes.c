@@ -16,7 +16,7 @@
 	extern char **environ;
 #endif
 
-#define FPIPES_IS_FILE(F) ((F) > FPIPES_ERR_TO_OUT)
+#define FPIPES_IS_FILE(F) ((F) > FPIPES_TEMP)
 
 void pipes_redirect_fd(int oldfd, int newfd, const char *msg);
 
@@ -60,6 +60,15 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 		}
 		pipes->in = NULL;
 	}
+	else if (inaction == FPIPES_TEMP) {
+		pipes->in = tmpfile();
+
+		if (pipes->in == NULL) {
+			goto error;
+		}
+
+		infd = fileno(pipes->in);
+	}
 	else if (inaction == FPIPES_LEAVE) {
 		pipes->in = NULL;
 	}
@@ -98,6 +107,15 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 			goto error;
 		}
 		pipes->out = NULL;
+	}
+	else if (outaction == FPIPES_TEMP) {
+		pipes->out = tmpfile();
+
+		if (pipes->out == NULL) {
+			goto error;
+		}
+
+		outfd = fileno(pipes->out);
 	}
 	else if (outaction == FPIPES_LEAVE) {
 		pipes->out = NULL;
@@ -152,6 +170,15 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 		}
 		pipes->err = NULL;
 	}
+	else if (erraction == FPIPES_TEMP) {
+		pipes->err = tmpfile();
+
+		if (pipes->err == NULL) {
+			goto error;
+		}
+
+		errfd = fileno(pipes->err);
+	}
 	else if (erraction == FPIPES_LEAVE) {
 		pipes->err = NULL;
 	}
@@ -186,13 +213,13 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 		pipes->pid = pid;
 
 		if (FPIPES_IS_FILE(inaction)) fclose(inaction);
-		else if (infd  > -1) close(infd);
+		else if (inaction  != FPIPES_TEMP && infd  > -1) close(infd);
 
 		if (FPIPES_IS_FILE(outaction)) fclose(outaction);
-		else if (outfd > -1) close(outfd);
+		else if (outaction != FPIPES_TEMP && outfd > -1) close(outfd);
 
 		if (FPIPES_IS_FILE(erraction)) fclose(erraction);
-		else if (errfd > -1) close(errfd);
+		else if (erraction != FPIPES_TEMP && errfd > -1) close(errfd);
 	}
 
 	return 0;
@@ -352,4 +379,50 @@ int fpipes_kill_chain(struct fpipes_chain chain[], int sig) {
 	}
 
 	return status;
+}
+
+FILE* fpipes_take_in(struct fpipes_chain chain[]) {
+	if (chain[0].argv) {
+		FILE *fp = chain[0].pipes.in;
+		chain[0].pipes.in = NULL;
+		return fp;
+	}
+	else {
+		errno = EINVAL;
+		return NULL;
+	}
+}
+
+FILE* fpipes_take_out(struct fpipes_chain chain[]) {
+	struct fpipes_chain *prev = chain;
+	for (struct fpipes_chain *ptr = chain; ptr->argv; ++ ptr) {
+		prev = ptr;
+	}
+
+	if (prev->argv) {
+		FILE *fp = prev->pipes.out;
+		prev->pipes.out = NULL;
+		return fp;
+	}
+	else {
+		errno = EINVAL;
+		return NULL;
+	}
+}
+
+FILE* fpipes_take_err(struct fpipes_chain chain[]) {
+	struct fpipes_chain *prev = chain;
+	for (struct fpipes_chain *ptr = chain; ptr->argv; ++ ptr) {
+		prev = ptr;
+	}
+
+	if (prev->argv) {
+		FILE *fp = prev->pipes.err;
+		prev->pipes.err = NULL;
+		return fp;
+	}
+	else {
+		errno = EINVAL;
+		return NULL;
+	}
 }

@@ -4,3 +4,7 @@
 *.so
 demo
 fdemo
+examples/chain
+examples/fchain
+examples/temp
+examples/ftemp

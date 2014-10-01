@@ -17,12 +17,13 @@ extern "C" {
 #define FPIPES_PIPE       ((FILE*)2)
 #define FPIPES_NULL       ((FILE*)3)
 #define FPIPES_ERR_TO_OUT ((FILE*)4)
+#define FPIPES_TEMP       ((FILE*)5)
 
 #define FPIPES_PASS     {-1, FPIPES_PIPE,  FPIPES_PIPE,  FPIPES_LEAVE}
 #define FPIPES_IN(IN)   {-1, (IN),         FPIPES_PIPE,  FPIPES_LEAVE}
 #define FPIPES_OUT(OUT) {-1, FPIPES_PIPE,  (OUT),        FPIPES_LEAVE}
 #define FPIPES_ERR(ERR) {-1, FPIPES_PIPE,  FPIPES_PIPE,  (ERR)}
-#define FPIPES_FIRS     {-1, FPIPES_LEAVE, FPIPES_PIPE,  FPIPES_LEAVE}
+#define FPIPES_FIRST    {-1, FPIPES_LEAVE, FPIPES_PIPE,  FPIPES_LEAVE}
 #define FPIPES_LAST     {-1, FPIPES_PIPE,  FPIPES_LEAVE, FPIPES_LEAVE}
 
 #define FPIPES_GET_LAST(CHAIN) ((CHAIN)[(sizeof(CHAIN) / sizeof(struct fpipes_chain))-2].pipes)
@@ -49,6 +50,10 @@ PIPES_EXPORT int fpipes_close(struct fpipes* pipes);
 PIPES_EXPORT int fpipes_open_chain( struct fpipes_chain chain[]);
 PIPES_EXPORT int fpipes_close_chain(struct fpipes_chain chain[]);
 PIPES_EXPORT int fpipes_kill_chain( struct fpipes_chain chain[], int sig);
+
+PIPES_EXPORT FILE* fpipes_take_in( struct fpipes_chain chain[]);
+PIPES_EXPORT FILE* fpipes_take_out(struct fpipes_chain chain[]);
+PIPES_EXPORT FILE* fpipes_take_err(struct fpipes_chain chain[]);
 
 #ifdef __cplusplus
 }

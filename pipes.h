@@ -16,6 +16,7 @@ extern "C" {
 #define PIPES_PIPE       -3
 #define PIPES_NULL       -4
 #define PIPES_ERR_TO_OUT -5
+#define PIPES_TEMP       -6
 
 #define PIPES_PASS     {-1, PIPES_PIPE,  PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_IN(IN)   {-1, (IN),        PIPES_PIPE,  PIPES_LEAVE}
@@ -48,6 +49,10 @@ PIPES_EXPORT int pipes_close(struct pipes* pipes);
 PIPES_EXPORT int pipes_open_chain( struct pipes_chain chain[]);
 PIPES_EXPORT int pipes_close_chain(struct pipes_chain chain[]);
 PIPES_EXPORT int pipes_kill_chain( struct pipes_chain chain[], int sig);
+
+PIPES_EXPORT int pipes_take_in( struct pipes_chain chain[]);
+PIPES_EXPORT int pipes_take_out(struct pipes_chain chain[]);
+PIPES_EXPORT int pipes_take_err(struct pipes_chain chain[]);
 
 #ifdef __cplusplus
 }
