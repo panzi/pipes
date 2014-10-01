@@ -1,21 +1,26 @@
-#ifndef PIPES_H
-#define PIPES_H
+#ifndef PIPES_PIPES_H
+#define PIPES_PIPES_H
 #pragma once
 
 #include <sys/types.h>
+
+#include "export.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define PIPES_LEAVE      -1
-#define PIPES_PIPE       -2
-#define PIPES_NULL       -3
-#define PIPES_ERR_TO_OUT -4
+/* These special values don't use -1 so passing the return values
+ * of failed open() calls and similar are detected. */
+#define PIPES_LEAVE      -2
+#define PIPES_PIPE       -3
+#define PIPES_NULL       -4
+#define PIPES_ERR_TO_OUT -5
 
-#define PIPES_IN(IN)   {-1, (IN),        PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_PASS     {-1, PIPES_PIPE,  PIPES_PIPE,  PIPES_LEAVE}
+#define PIPES_IN(IN)   {-1, (IN),        PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_OUT(OUT) {-1, PIPES_PIPE,  (OUT),       PIPES_LEAVE}
+#define PIPES_ERR(ERR) {-1, PIPES_PIPE,  PIPES_LEAVE, (ERR)}
 #define PIPES_HEAD     {-1, PIPES_LEAVE, PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_TAIL     {-1, PIPES_PIPE,  PIPES_LEAVE, PIPES_LEAVE}
 
@@ -32,12 +37,12 @@ struct pipes_chain {
 	char const* const* envp;
 };
 
-int pipes_open(char const *const argv[], char const *const envp[], struct pipes* pipes);
-int pipes_close(struct pipes* pipes);
+PIPES_EXPORT int pipes_open(char const *const argv[], char const *const envp[], struct pipes* pipes);
+PIPES_EXPORT int pipes_close(struct pipes* pipes);
 
-int pipes_open_chain( struct pipes_chain chain[]);
-int pipes_close_chain(struct pipes_chain chain[]);
-int pipes_kill_chain( struct pipes_chain chain[], int sig);
+PIPES_EXPORT int pipes_open_chain( struct pipes_chain chain[]);
+PIPES_EXPORT int pipes_close_chain(struct pipes_chain chain[]);
+PIPES_EXPORT int pipes_kill_chain( struct pipes_chain chain[], int sig);
 
 #ifdef __cplusplus
 }

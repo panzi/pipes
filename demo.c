@@ -7,7 +7,7 @@
 
 int main(int argc, const char* argv[]) {
 	if (argc < 2) {
-		fprintf(stderr, "not enough arguments\n");
+		fprintf(stderr, "usage: %s <filename>\n", argv[0]);
 		return 1;
 	}
 
@@ -18,7 +18,7 @@ int main(int argc, const char* argv[]) {
 		return 1;
 	}
 
-	char const* grep[] = {"grep", "\\w\\+(.*)", NULL};
+	char const* grep[] = {"grep", "^[^#]*\\w\\+(.*)", NULL};
 	char const* sed[]  = {"sed", "s/.*\\b\\(\\w\\+\\)(.*).*/\\1/", NULL};
 
 	struct pipes_chain chain[] = {
@@ -40,11 +40,13 @@ int main(int argc, const char* argv[]) {
 		if (size == 0) break;
 		if (size < 0) {
 			perror("read");
+			pipes_close_chain(chain);
 			return 1;
 		}
 
 		if (fwrite(buf, (size_t)size, 1, stdout) != 1) {
 			perror("fwrite");
+			pipes_close_chain(chain);
 			return 1;
 		}
 	}
@@ -52,6 +54,7 @@ int main(int argc, const char* argv[]) {
 	int status = 0;
 	if (waitpid(chain[1].pipes.pid, &status, 0) == -1) {
 		perror("waitpid");
+		pipes_close_chain(chain);
 		return 1;
 	}
 
