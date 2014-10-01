@@ -2,7 +2,11 @@ pipes
 =====
 
 Very simple C library that lets you build pipe chains. Requires a POSIX compliant
-oparating system. See demo.c for a small usage example.
+oparating system. There are two variants `pipes.h` and `fpipes.h`. The first
+exposes an interface based on file descriptors and the second an interface based
+on `FILE` objects.
+
+See `demo.c` and `fdemo.c` for small usage examples.
 
 BSD License
 -----------
