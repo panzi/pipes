@@ -332,25 +332,8 @@ int fpipes_close_chain(struct fpipes_chain chain[]) {
 	int status = 0;
 
 	for (struct fpipes_chain *ptr = chain; ptr->argv; ++ ptr) {
-		if (ptr->pipes.in) {
-			if (fclose(ptr->pipes.in) != 0) {
-				status = -1;
-			}
-			ptr->pipes.in = NULL;
-		}
-
-		if (ptr->pipes.out) {
-			if (fclose(ptr->pipes.out) != 0) {
-				status = -1;
-			}
-			ptr->pipes.out = NULL;
-		}
-
-		if (ptr->pipes.err) {
-			if (fclose(ptr->pipes.err) != 0) {
-				status = -1;
-			}
-			ptr->pipes.err = NULL;
+		if (fpipes_close(&ptr->pipes) != 0) {
+			status = -1;
 		}
 	}
 

@@ -262,25 +262,8 @@ int pipes_close_chain(struct pipes_chain chain[]) {
 	int status = 0;
 
 	for (struct pipes_chain *ptr = chain; ptr->argv; ++ ptr) {
-		if (ptr->pipes.infd > -1) {
-			if (close(ptr->pipes.infd) != 0) {
-				status = -1;
-			}
-			ptr->pipes.infd = -1;
-		}
-
-		if (ptr->pipes.outfd > -1) {
-			if (close(ptr->pipes.outfd) != 0) {
-				status = -1;
-			}
-			ptr->pipes.outfd = -1;
-		}
-
-		if (ptr->pipes.errfd > -1) {
-			if (close(ptr->pipes.errfd) != 0) {
-				status = -1;
-			}
-			ptr->pipes.errfd = -1;
+		if (pipes_close(&ptr->pipes) != 0) {
+			status = -1;
 		}
 	}
 
