@@ -197,7 +197,7 @@ int pipes_close(struct pipes* pipes) {
 
 int pipes_open_chain(struct pipes_chain chain[]) {
 	struct pipes_chain *ptr  = chain;
-	struct pipes_chain *last = chain;
+	struct pipes_chain *prev = chain;
 
 	for (; ptr->argv; ++ ptr) {
 		ptr->pipes.pid = -1;
@@ -212,16 +212,16 @@ int pipes_open_chain(struct pipes_chain chain[]) {
 
 	for (++ ptr; ptr->argv; ++ ptr) {
 		if (ptr->pipes.infd == PIPES_PIPE) {
-			if (last->pipes.outfd < 0 && last->pipes.outfd != PIPES_PIPE) {
+			if (prev->pipes.outfd < 0 && prev->pipes.outfd != PIPES_PIPE) {
 				errno = EINVAL;
 				goto error;
 			}
 		}
-		last = ptr;
+		prev = ptr;
 	}
 
 	ptr  = chain;
-	last = chain;
+	prev = chain;
 
 	if (pipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 		goto error;
@@ -229,15 +229,15 @@ int pipes_open_chain(struct pipes_chain chain[]) {
 
 	for (++ ptr; ptr->argv; ++ ptr) {
 		if (ptr->pipes.infd == PIPES_PIPE) {
-			ptr->pipes.infd   = last->pipes.outfd;
-			last->pipes.outfd = -1;
+			ptr->pipes.infd   = prev->pipes.outfd;
+			prev->pipes.outfd = -1;
 		}
 
 		if (pipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 			goto error;
 		}
 
-		last = ptr;
+		prev = ptr;
 	}
 
 	return 0;

@@ -267,7 +267,7 @@ int fpipes_close(struct fpipes* pipes) {
 
 int fpipes_open_chain(struct fpipes_chain chain[]) {
 	struct fpipes_chain *ptr  = chain;
-	struct fpipes_chain *last = chain;
+	struct fpipes_chain *prev = chain;
 
 	for (; ptr->argv; ++ ptr) {
 		ptr->pipes.pid = -1;
@@ -282,16 +282,16 @@ int fpipes_open_chain(struct fpipes_chain chain[]) {
 
 	for (++ ptr; ptr->argv; ++ ptr) {
 		if (ptr->pipes.in == FPIPES_PIPE) {
-			if (!FPIPES_IS_FILE(last->pipes.out) && last->pipes.out != FPIPES_PIPE) {
+			if (!FPIPES_IS_FILE(prev->pipes.out) && prev->pipes.out != FPIPES_PIPE) {
 				errno = EINVAL;
 				goto error;
 			}
 		}
-		last = ptr;
+		prev = ptr;
 	}
 
 	ptr  = chain;
-	last = chain;
+	prev = chain;
 
 	if (fpipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 		goto error;
@@ -299,15 +299,15 @@ int fpipes_open_chain(struct fpipes_chain chain[]) {
 
 	for (++ ptr; ptr->argv; ++ ptr) {
 		if (ptr->pipes.in == FPIPES_PIPE) {
-			ptr->pipes.in   = last->pipes.out;
-			last->pipes.out = NULL;
+			ptr->pipes.in   = prev->pipes.out;
+			prev->pipes.out = NULL;
 		}
 
 		if (fpipes_open(ptr->argv, ptr->envp, &ptr->pipes) == -1) {
 			goto error;
 		}
 
-		last = ptr;
+		prev = ptr;
 	}
 
 	return 0;
