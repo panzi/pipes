@@ -6,7 +6,7 @@ oparating system. There are two variants `pipes.h` and `fpipes.h`. The first
 exposes an interface based on file descriptors and the second an interface based
 on `FILE` objects.
 
-See `demo.c` and `fdemo.c` for small usage examples.
+See the `examples` folder for small usage examples.
 
 BSD License
 -----------

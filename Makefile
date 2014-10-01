@@ -4,48 +4,30 @@ PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 
-.PHONY: lib all clean install uninstall
+.PHONY: lib all examples clean install uninstall
 
 lib: libpipes.so
 
-all: lib demo fdemo
+all: lib examples
 
-libpipes.so: pipes_pic.o fpipes_pic.o redirect_pic.o
-	$(CC) $(CFLAGS) -shared -o $@ pipes_pic.o fpipes_pic.o redirect_pic.o -Wl,-soname,libpipes.so.1
+examples:
+	$(MAKE) -C examples
 
-demo: demo.o pipes.o redirect.o pipes.h
-	$(CC) $(CFLAGS) demo.o pipes.o redirect.o -o $@
-
-fdemo: fdemo.o fpipes.o redirect.o fpipes.h
-	$(CC) $(CFLAGS) fdemo.o fpipes.o redirect.o -o $@
+libpipes.so: pipes.o fpipes.o redirect.o
+	$(CC) $(CFLAGS) -shared -o $@ pipes.o fpipes.o redirect.o -Wl,-soname,libpipes.so.1
 
 pipes.o: pipes.c pipes.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-demo.o: demo.c pipes.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
 
 fpipes.o: fpipes.c fpipes.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-fdemo.o: fdemo.c fpipes.h
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
 
 redirect.o: redirect.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-pipes_pic.o: pipes.c pipes.h
-	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
-
-fpipes_pic.o: fpipes.c fpipes.h
-	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
-
-redirect_pic.o: redirect.c
 	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
 
 clean:
-	rm demo fdemo demo.o pipes.o fdemo.o fpipes.o redirect.o \
-	   libpipes.so pipes_pic.o fpipes_pic.o redirect_pic.o
+	rm libpipes.so pipes.o fpipes.o redirect.o
+	$(MAKE) -C examples clean
 
 install: lib
 	install -s libpipes.so "$(LIBDIR)"
