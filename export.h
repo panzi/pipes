@@ -3,7 +3,7 @@
 #pragma once
 
 #if defined _WIN32 || defined _WIN64 || defined __CYGWIN__
-	#ifdef BUILDING_DLL
+	#ifdef PIPES_BUILDING_LIB
 		#ifdef __GNUC__
 			#define PIPES_EXPORT __attribute__ ((dllexport))
 		#else
@@ -16,7 +16,7 @@
 			#define PIPES_EXPORT __declspec(dllimport)
 		#endif
 	#endif
-	#define DLL_LOCAL
+	#define PIPES_LOCAL
 #else
 	#if __GNUC__ >= 4
 		#define PIPES_EXPORT __attribute__ ((visibility ("default")))

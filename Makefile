@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden -g
+SOFLAGS=$(CFLAGS) -DPIPES_BUILDING_LIB -fPIC
 PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
@@ -14,16 +15,16 @@ examples:
 	$(MAKE) -C examples
 
 libpipes.so: pipes.o fpipes.o redirect.o
-	$(CC) $(CFLAGS) -shared -o $@ pipes.o fpipes.o redirect.o -Wl,-soname,libpipes.so.1
+	$(CC) $(SOFLAGS) -shared -o $@ pipes.o fpipes.o redirect.o -Wl,-soname,libpipes.so.1
 
 pipes.o: pipes.c pipes.h
-	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
+	$(CC) $(SOFLAGS) -c $< -o $@
 
 fpipes.o: fpipes.c fpipes.h
-	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
+	$(CC) $(SOFLAGS) -c $< -o $@
 
 redirect.o: redirect.c
-	$(CC) $(CFLAGS) -c $< -o $@ -fPIC
+	$(CC) $(SOFLAGS) -c $< -o $@
 
 clean:
 	rm libpipes.so pipes.o fpipes.o redirect.o
