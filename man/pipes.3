@@ -1,0 +1,215 @@
+.TH PIPES 3 2014-09-03 "" "PIPES"
+.SH NAME
+pipes \- build pipe chains
+
+.SH SYNOPSIS
+.nf
+.B #include <pipes/pipes.h>
+.sp
+.BI "int pipes_open(char const *const " argv "[], char const *const " envp "[],
+.BI "               struct pipes* " pipes ");
+.BI "int pipes_close(struct pipes* " pipes ");
+.sp
+.BI "int pipes_open_chain(struct pipes_chain " chain "[]);
+.BI "int pipes_close_chain(struct pipes_chain " chain "[]);
+.BI "int pipes_kill_chain(struct pipes_chain " chain "[], int " sig ");
+.sp
+.BI "int pipes_take_in(struct pipes_chain " chain "[]);
+.BI "int pipes_take_out(struct pipes_chain " chain "[]);
+.BI "int pipes_take_err(struct pipes_chain " chain "[]);
+.sp
+.BI "#define PIPES_GET_LAST(" CHAIN ")
+.BI "#define PIPES_GET_IN(" CHAIN ")
+.BI "#define PIPES_GET_OUT(" CHAIN ")
+.BI "#define PIPES_GET_ERR(" CHAIN ")
+
+.SH DESCRIPTION
+Functions to build pipe chains between programs.
+
+.SS pipes_open()
+Spawn a child process and open pipes to it's io streams.
+
+.IR argv " is a NULL terminated array of arguments. The first one is the program to execute
+and does not need to be an absolute path.
+
+.IR envp " is a NULL terminated array of environment variables. After forking, the child
+.RB "processes global " environ " variable will be set to this value. If
+.IR envp " is NULL it will be ignored. See also:
+.BR environ "(3)
+
+.PP
+.in +4n
+.nf
+struct pipes {
+	pid_t pid;     /* process ID of opened child process */
+	int   infd;    /* pipe to stdin of child process     */
+	int   outfd;   /* pipe to stdout of child process    */
+	int   errfd;   /* pipe to stderr of child process    */
+};
+.fi
+.in
+
+.RI "The " infd ", " outfd ", and " errfd " fields of " pipes " may either be set to valid
+file descriptors or to one if the following special values. In case they are file descriptors
+they will be used as the appropriate stream in the child process and will be closed in the parent
+.RB "process. " pipes_open "() ensures that any passed file descriptor will be always closed,
+no matter if the call was successful or resulted in an error.
+
+.TP
+.B PIPES_LEAVE
+Leave stream unchaned (i.e. don't open a pipe to the stream of the child process).
+
+.TP
+.B PIPES_PIPE
+Open a pipe to this stream of the child process. For
+.IR infd " the write end of the pipe will be returned in the same field. For " outfd "
+.RI "and " errfd " the read end of the pipe will be retuned in the same field.
+
+.TP
+.B PIPES_NULL
+Pipe this stream to/from
+.IR /dev/null .
+
+.TP
+.B PIPES_ERR_TO_OUT
+Redirect child process stderr to stdout. This is only valid for the
+.IR errfd " field.
+
+.TP
+.B PIPES_TEMP
+Open a temporary file as this stream. If supported by the kernel and filesystem this
+.RB "will be done using the " O_TMPFILE " flag. A copy of the file descriptor will be
+returned in the same field.
+
+.PP
+.RI "These helper macros can be used to initialize the " pipes " structure:
+
+.TP
+.B PIPES_PASS
+.RI "Set " infd " and " outfd " to
+.BR PIPES_PIPE " and set
+.IR errfd " to
+.BR PIPES_LEAVE .
+This is useful for intermediaries in a pipe chain.
+
+.TP
+.B PIPES_IN(IN)
+.RI "Set " infd " to
+.IR IN ",
+.IR outfd " to
+.BR PIPES_PIPE " and
+.IR errfd " to
+.BR PIPES_LEAVE .
+
+.TP
+.B PIPES_OUT(OUT)
+.RI "Set " infd " to
+.BR PIPES_PIPE ",
+.IR outfd " to
+.IR OUT " and
+.IR errfd " to
+.BR PIPES_LEAVE .
+
+.TP
+.B PIPES_ERR(ERR)
+.RI "Set " infd " to
+.BR PIPES_PIPE ",
+.IR outfd " to
+.BR PIPES_LEAVE " and
+.IR errfd " to
+.IR ERR .
+
+.TP
+.B PIPES_FIRST
+.RI "Set " outfd " to
+.BR PIPES_PIPE " and the rest to
+.BR PIPES_LEAVE .
+This is useful for the first command in a chain.
+
+.TP
+.B PIPES_LAST
+.RI "Set " infd " to
+.BR PIPES_PIPE " and the rest to
+.BR PIPES_LEAVE .
+This is useful for the last command in a chain.
+
+
+.SS pipes_close()
+.RB "Close all pipes previously opened with " pipes_open "(). It is save to call this
+.RB "even if the " pipes_open "() call failed.
+
+.SS pipes_open_chain()
+Spawn a number of child prcesses and open pipes between them. Intermediate pipes are
+not accessible by the calling process.
+
+.RI "The last element of " chain " is marked by setting " argv " to NULL. " envp
+.RI "can be NULL and " pipes " must be initialized in the same way as for
+.BR pipes_open ().
+
+.PP
+.in +4n
+.nf
+struct pipes_chain {
+	struct pipes       pipes;   /* see above                         */
+	char const* const* argv;    /* NULL terminated argument array    */
+	char const* const* envp;    /* NULL terminated environment array */
+};
+.fi
+.in
+
+.SS pipes_close_chain()
+.RI "Close all pipes in " chain ". It is save to call this even if the
+.BR pipes_open "() call failed.
+
+.SS pipes_kill_chain()
+.RI "Send signal " sig " to all processes in " chain .
+
+.SS pipes_take_in()
+Return the pipe to the input stream pipe of the first process in the
+.IR chain ". The " infd " field in the chain will be set to -1 so a successive
+.BR pipes_close_chain "() call won't close it.
+
+.SS pipes_take_out()
+Return the pipe to the output stream pipe of the last process in the
+.IR chain ". The " outfd " field in the chain will be set to -1 so a successive
+.BR pipes_close_chain "() call won't close it.
+
+.SS pipes_take_err()
+Return the pipe to the error stream pipe of the last process in the
+.IR chain ". The " errfd " field in the chain will be set to -1 so a successive
+.BR pipes_close_chain "() call won't close it.
+
+.SS PIPES_GET_LAST()
+.RI "Macro to get the last pipe in " CHAIN ". " CHAIN " must be an array, not
+a pointer.
+
+.SS PIPES_GET_IN()
+.RI "Macro to get the input stream pipe of the first process in " CHAIN .
+
+.SS PIPES_GET_OUT()
+.RI "Macro to get the output stream pipe of the last process in " CHAIN ". " CHAIN
+must be an array, not a pointer.
+
+.SS PIPES_GET_ERR()
+.RI "Macro to get the error stream pipe of the last process in " CHAIN ". " CHAIN
+must be an array, not a pointer.
+
+.SH ERRORS
+TODO...
+
+.TP
+.B EINVAL
+TODO...
+
+.SH SOURCE
+Get the source at https://github.com/panzi/pipes
+
+.SH AUTHOR
+Mathias Panzenböck (grosser.meister.morti@gmx.net)
+
+.SH SEE ALSO
+.BR fpipes (3),
+.BR environ (3),
+.BR execvp (3),
+.BR fork (3),
+.BR popen (3)
