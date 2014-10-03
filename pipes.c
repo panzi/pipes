@@ -157,16 +157,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		}
 	}
 	else if (erraction == PIPES_ERR_TO_OUT) {
-		if (outaction == PIPES_LEAVE) {
-			errfd = dup(STDOUT_FILENO);
-		}
-		else {
-			errfd = dup(outfd);
-		}
-
-		if (errfd < 0) {
-			goto error;
-		}
+		// see below
 	}
 	else if (erraction > -1) {
 		errfd = erraction;
@@ -195,7 +186,15 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 		// child
 		pipes_redirect_fd(infd,  STDIN_FILENO,  "redirecting stdin");
 		pipes_redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
-		pipes_redirect_fd(errfd, STDERR_FILENO, "redirecting stderr");
+		if (erraction == PIPES_ERR_TO_OUT) {
+			if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
+				perror("redirecting stderr");
+				exit(EXIT_FAILURE);
+			}
+		}
+		else {
+			pipes_redirect_fd(errfd, STDERR_FILENO, "redirecting stderr");
+		}
 
 		if (envp) {
 			environ = (char**)envp;
