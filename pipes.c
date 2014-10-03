@@ -23,24 +23,14 @@ void pipes_redirect_fd(int oldfd, int newfd, const char *msg);
 #	define P_tmpdir "/tmp"
 #endif
 
-#if defined(__linux__) && !defined(O_TMPFILE)
-#	include <linux/version.h>
-#	if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
-#		define O_TMPFILE (020000000 | O_DIRECTORY)
-#	endif
-#endif
-
-#ifdef O_TMPFILE
-#	define pipes_temp_fd() open(P_tmpdir, O_TMPFILE | O_RDWR, 0600)
-#else
-static int pipes_temp_fd() {
+static int pipes_temp_fd_fallback() {
 	char name[L_tmpnam];
 
 	if (tmpnam(name) == NULL) {
 		return -1;
 	}
 
-	int fd = open(name, O_CREAT | O_RDWR, 0600);
+	int fd = open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
 	if (fd < 0) {
 		return -1;
@@ -53,6 +43,23 @@ static int pipes_temp_fd() {
 
 	return fd;
 }
+
+#if defined(O_TMPFILE) || defined(__linux__)
+#	ifndef O_TMPFILE
+#		define O_TMPFILE (020000000 | O_DIRECTORY)
+#	endif
+static int pipes_temp_fd() {
+	int fd = open(P_tmpdir, O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
+	if (fd < 0 && (
+		errno == EOPNOTSUPP || // no filesystem support for O_TMPFILE
+		errno == EISDIR     || // no kernel support for O_TMPFILE
+		errno == ENOENT)) {    // no kernel support for O_TMPFILE and path does not exist
+		return pipes_temp_fd_fallback();
+	}
+	return fd;
+}
+#else
+#	define pipes_temp_fd() pipes_temp_fd_fallback()
 #endif
 
 int pipes_open(char const *const argv[], char const *const envp[], struct pipes* pipes) {
