@@ -205,8 +205,8 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 
 		if (execvp(argv[0], (char * const*)argv) == -1) {
 			perror(argv[0]);
-			exit(EXIT_FAILURE);
 		}
+		exit(EXIT_FAILURE);
 	}
 	else {
 		// parent
