@@ -3,39 +3,40 @@
 pipes \- build pipe chains
 
 .SH SYNOPSIS
+.br
 .nf
 .B #include <pipes/pipes.h>
+
+.SS "Data Structures"
+.nf
+struct \fBpipes\fP;
+struct \fBpipes_chain\fP;
+
+.SS "Functions"
+.nf
+int \fBpipes_open\fP(char const *const \fIargv\fP[], char const *const \fIenvp\fP[],
+               struct \fBpipes\fP* \fIpipes\fP);
+int \fBpipes_close\fP(struct \fBpipes\fP* \fIpipes\fP);
 .sp
-.BI "int pipes_open(char const *const " argv "[], char const *const " envp "[],
-.BI "               struct pipes* " pipes ");
-.BI "int pipes_close(struct pipes* " pipes ");
+int \fBpipes_open_chain\fP(struct \fBpipes_chain\fP \fIchain\fP[]);
+int \fBpipes_close_chain\fP(struct \fBpipes_chain\fP \fIchain\fP[]);
+int \fBpipes_kill_chain\fP(struct \fBpipes_chain\fP \fIchain\fP[], int \fIsig\fP);
 .sp
-.BI "int pipes_open_chain(struct pipes_chain " chain "[]);
-.BI "int pipes_close_chain(struct pipes_chain " chain "[]);
-.BI "int pipes_kill_chain(struct pipes_chain " chain "[], int " sig ");
-.sp
-.BI "int pipes_take_in(struct pipes_chain " chain "[]);
-.BI "int pipes_take_out(struct pipes_chain " chain "[]);
-.BI "int pipes_take_err(struct pipes_chain " chain "[]);
-.sp
-.BI "#define PIPES_GET_LAST(" CHAIN ")
-.BI "#define PIPES_GET_IN(" CHAIN ")
-.BI "#define PIPES_GET_OUT(" CHAIN ")
-.BI "#define PIPES_GET_ERR(" CHAIN ")
+int \fBpipes_take_in\fP(struct \fBpipes_chain\fP \fIchain\fP[]);
+int \fBpipes_take_out\fP(struct \fBpipes_chain\fP \fIchain\fP[]);
+int \fBpipes_take_err\fP(struct \fBpipes_chain\fP \fIchain\fP[]);
+
+.SS "Macros"
+.nf
+#define \fBPIPES_GET_LAST\fP(\fICHAIN\fP)
+#define \fBIPES_GET_IN\fP(\fICHAIN\fP)
+#define \fBIPES_GET_OUT\fP(\fICHAIN\fP)
+#define \fBIPES_GET_ERR\fP(\fICHAIN\fP)
 
 .SH DESCRIPTION
 Functions to build pipe chains between programs.
 
-.SS pipes_open()
-Spawn a child process and open pipes to it's io streams.
-
-.IR argv " is a NULL terminated array of arguments. The first one is the program to execute
-and does not need to be an absolute path.
-
-.IR envp " is a NULL terminated array of environment variables. After forking, the child
-.RB "processes global " environ " variable will be set to this value. If
-.IR envp " is NULL it will be ignored. See also:
-.BR environ "(3)
+.SS sctruct pipes
 
 .PP
 .in +4n
@@ -49,11 +50,11 @@ struct pipes {
 .fi
 .in
 
-.RI "The " infd ", " outfd ", and " errfd " fields of " pipes " may either be set to valid
-file descriptors or to one if the following special values. In case they are file descriptors
-they will be used as the appropriate stream in the child process and will be closed in the parent
-.RB "process. " pipes_open "() ensures that any passed file descriptor will be always closed,
-no matter if the call was successful or resulted in an error.
+The \fIinfd\fP, \fIoutfd\fP, and \fIerrfd\fP fields of \fIpipes\fP may either be set to valid
+file descriptors or to one of the following special values. In case they are file descriptors
+they will be used as the appropriate stream in the child process and will be closed in the
+parent process. \fBpipes_open\fP() and \fBpipes_open_chain\fP() ensure that any passed file
+descriptor will be always closed, no matter if the call was successful or resulted in an error.
 
 .TP
 .B PIPES_LEAVE
@@ -61,90 +62,58 @@ Leave stream unchaned (i.e. don't open a pipe to the stream of the child process
 
 .TP
 .B PIPES_PIPE
-Open a pipe to this stream of the child process. For
-.IR infd " the write end of the pipe will be returned in the same field. For " outfd "
-.RI "and " errfd " the read end of the pipe will be retuned in the same field.
+Open a pipe to this stream of the child process. For \fIinfd\fP the write end of the pipe will
+be returned in the same field. For \fIoutfd\fP and \fIerrfd\fP the read end of the pipe will
+be retuned in the same field.
 
 .TP
 .B PIPES_NULL
-Pipe this stream to/from
-.IR /dev/null .
+Pipe this stream to/from \fI/dev/null\fP.
 
 .TP
 .B PIPES_ERR_TO_OUT
-Redirect child process stderr to stdout. This is only valid for the
-.IR errfd " field.
+Redirect child process stderr to stdout. This is only valid for the \fIerrfd\fP field.
 
 .TP
 .B PIPES_TEMP
 Open a temporary file as this stream. If supported by the kernel and filesystem this
-.RB "will be done using the " O_TMPFILE " flag. A copy of the file descriptor will be
+will be done using the \fBO_TMPFILE\fP flag. A copy of the file descriptor will be
 returned in the same field.
 
 .PP
-.RI "These helper macros can be used to initialize the " pipes " structure:
+These helper macros can be used to initialize the \fIpipes\fP structure:
 
 .TP
 .B PIPES_PASS
-.RI "Set " infd " and " outfd " to
-.BR PIPES_PIPE " and set
-.IR errfd " to
-.BR PIPES_LEAVE .
+Set \fIinfd\fP and \fIoutfd\fP to \fBPIPES_PIPE\fP and set \fIerrfd\fP to \fBPIPES_LEAVE\fP.
 This is useful for intermediaries in a pipe chain.
 
 .TP
-.B PIPES_IN(IN)
-.RI "Set " infd " to
-.IR IN ",
-.IR outfd " to
-.BR PIPES_PIPE " and
-.IR errfd " to
-.BR PIPES_LEAVE .
+.BI PIPES_IN( IN )
+Set \fIinfd\fP to \fIIN\fP, \fIoutfd\fP to \fBPIPES_PIPE\fP and \fIerrfd\fP to
+\fBPIPES_LEAVE\fP.
 
 .TP
-.B PIPES_OUT(OUT)
-.RI "Set " infd " to
-.BR PIPES_PIPE ",
-.IR outfd " to
-.IR OUT " and
-.IR errfd " to
-.BR PIPES_LEAVE .
+.BI PIPES_OUT( OUT )
+Set \fIinfd\fP to \fBPIPES_PIPE\fP, \fIoutfd\fP to \fIOUT\fP and \fIerrfd\fP to
+\fBPIPES_LEAVE\fP.
 
 .TP
-.B PIPES_ERR(ERR)
-.RI "Set " infd " to
-.BR PIPES_PIPE ",
-.IR outfd " to
-.BR PIPES_LEAVE " and
-.IR errfd " to
-.IR ERR .
+.BI PIPES_ERR( ERR )
+Set \fIinfd\fP to \fBPIPES_PIPE\fP, \fIoutfd\fP to \fBPIPES_LEAVE\fP and \fIerrfd\fP to
+\fIERR\fP.
 
 .TP
 .B PIPES_FIRST
-.RI "Set " outfd " to
-.BR PIPES_PIPE " and the rest to
-.BR PIPES_LEAVE .
-This is useful for the first command in a chain.
+Set \fIoutfd\fP to \fBBR PIPES_PIPE\fP and the rest to \fBPIPES_LEAVE\fP. This is useful for
+the first command in a chain.
 
 .TP
 .B PIPES_LAST
-.RI "Set " infd " to
-.BR PIPES_PIPE " and the rest to
-.BR PIPES_LEAVE .
-This is useful for the last command in a chain.
+Set \fIinfd\fP to \fBPIPES_PIPE\fP and the rest to \fBPIPES_LEAVE\fP. This is useful for the
+last command in a chain.
 
-
-.SS pipes_close()
-.RB "Close all pipes previously opened with " pipes_open "(). It is save to call this
-.RB "even if the " pipes_open "() call failed.
-
-.SS pipes_open_chain()
-Spawn a number of child prcesses and open pipes between them. Intermediate pipes are
-not accessible by the calling process.
-
-.RI "The last element of " chain " is marked by setting " argv " to NULL. " envp
-.RI "can be NULL and " pipes " must be initialized in the same way as for
-.BR pipes_open ().
+.SS struct pipes_chain
 
 .PP
 .in +4n
@@ -157,42 +126,72 @@ struct pipes_chain {
 .fi
 .in
 
-.SS pipes_close_chain()
-.RI "Close all pipes in " chain ". It is save to call this even if the
-.BR pipes_open "() call failed.
+\fBpipes_chain_open\fP() accepts an array of \fBpipe_chain\fP structures. It passed the fields
+of each structure to an \fBpipes_open\fP() call.
 
-.SS pipes_kill_chain()
-.RI "Send signal " sig " to all processes in " chain .
+.SS int pipes_open(char const *const \fIargv\fP[], char const *const \fIenvp\fP[], struct pipes* \fIpipes\fP);
+Spawn a child process and open pipes to it's io streams.
 
-.SS pipes_take_in()
-Return the pipe to the input stream pipe of the first process in the
-.IR chain ". The " infd " field in the chain will be set to -1 so a successive
-.BR pipes_close_chain "() call won't close it.
+\fIargv\fP is a NULL terminated array of arguments. The first one is the program to execute
+and does not need to be an absolute path.
 
-.SS pipes_take_out()
-Return the pipe to the output stream pipe of the last process in the
-.IR chain ". The " outfd " field in the chain will be set to -1 so a successive
-.BR pipes_close_chain "() call won't close it.
+\fIenvp\fP is a NULL terminated array of environment variables. After forking, the child
+processes global \fBenviron\fP variable will be set to this value. If \fIenvp\fP is NULL it will
+be ignored. See also: \fBenviron\fP(3)
 
-.SS pipes_take_err()
-Return the pipe to the error stream pipe of the last process in the
-.IR chain ". The " errfd " field in the chain will be set to -1 so a successive
-.BR pipes_close_chain "() call won't close it.
+On success returns 0, on error returns -1 and sets \fBerrno\fP. If \fIinfd\fP, \fIoutfd\fP or
+\fIerrfd\fP has an illegal value \fBerrno\fP is set to \fBEINVAL\fP. For other possible error
+codes see \fBopen\fP(2), \fBpipe\fP(2), \fBdup2\fP(2), and \fBfork\fP(2).
 
-.SS PIPES_GET_LAST()
-.RI "Macro to get the last pipe in " CHAIN ". " CHAIN " must be an array, not
-a pointer.
+.SS int pipes_close(struct pipes* \fIpipes\fP)
+Close all pipes previously opened with \fBpipes_open\fP(). It is save to call this even if the
+\fBpipes_open\fP() call failed.
 
-.SS PIPES_GET_IN()
-.RI "Macro to get the input stream pipe of the first process in " CHAIN .
+Returns 0 on success, -1 if \fBclose(2)\fP on any of the file descriptors failed.
 
-.SS PIPES_GET_OUT()
-.RI "Macro to get the output stream pipe of the last process in " CHAIN ". " CHAIN
-must be an array, not a pointer.
+.SS int pipes_open_chain(struct pipes_chain \fIchain\fP[])
+Spawn a number of child prcesses and open pipes between them. Intermediate pipes are
+not accessible by the calling process.
 
-.SS PIPES_GET_ERR()
-.RI "Macro to get the error stream pipe of the last process in " CHAIN ". " CHAIN
-must be an array, not a pointer.
+The last element of \fIchain\fP is marked by setting \fIargv\fP to NULL. \fIenvp\fP can be NULL
+and \fIpipes\fP must be initialized in the same way as for \fBpipes_open\fP().
+
+On success returns 0, on error returns -1 and sets \fBerrno\fP. In addition to the errors
+of \fBopen_pipes\fP()
+
+.SS pipes_close_chain(struct pipes_chain \fIchain\fP[])
+Close all pipes in \fIchain\fP. It is save to call this even if the \fBpipes_open\fP() call
+failed.
+
+.SS pipes_kill_chain(struct pipes_chain \fIchain\fP[], int \fIsig\fP)
+Send signal \fIsig\fP to all processes in \fIchain\fP.
+
+.SS pipes_take_in(struct pipes_chain \fIchain\fP[])
+Return the pipe to the input stream pipe of the first process in the \fIchain\fP. The \fIinfd\fP
+field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close
+it.
+
+.SS pipes_take_out(struct pipes_chain \fIchain\fP[])
+Return the pipe to the output stream pipe of the last process in the \fIchain\fP. The \fIoutfd\fP
+field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close it.
+
+.SS pipes_take_err(struct pipes_chain \fIchain\fP[])
+Return the pipe to the error stream pipe of the last process in the \fIchain\fP. The \fIerrfd\fP
+field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close it.
+
+.SS PIPES_GET_LAST(\fICHAIN\fP)
+Macro to get the last pipe in \fICHAIN\fP. \fICHAIN\fP must be an array, not a pointer.
+
+.SS PIPES_GET_IN(\fICHAIN\fP)
+Macro to get the input stream pipe of the first process in \fICHAIN\fP.
+
+.SS PIPES_GET_OUT(\fICHAIN\fP)
+Macro to get the output stream pipe of the last process in \fICHAIN\fP. \fICHAIN\fP must be an
+array, not a pointer.
+
+.SS PIPES_GET_ERR(\fICHAIN\fP)
+Macro to get the error stream pipe of the last process in \fICHAIN\fP. \fICHAIN\fP must be an
+array, not a pointer.
 
 .SH ERRORS
 TODO...

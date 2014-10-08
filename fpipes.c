@@ -306,11 +306,9 @@ int fpipes_open_chain(struct fpipes_chain chain[]) {
 	ptr = chain;
 
 	for (++ ptr; ptr->argv; ++ ptr) {
-		if (ptr->pipes.in == FPIPES_PIPE) {
-			if (!FPIPES_IS_FILE(prev->pipes.out) && prev->pipes.out != FPIPES_PIPE) {
-				errno = EINVAL;
-				goto error;
-			}
+		if (ptr->pipes.in == FPIPES_PIPE && prev->pipes.out != FPIPES_PIPE) {
+			errno = EINVAL;
+			goto error;
 		}
 		prev = ptr;
 	}

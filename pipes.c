@@ -278,11 +278,9 @@ int pipes_open_chain(struct pipes_chain chain[]) {
 	ptr = chain;
 
 	for (++ ptr; ptr->argv; ++ ptr) {
-		if (ptr->pipes.infd == PIPES_PIPE) {
-			if (prev->pipes.outfd < 0 && prev->pipes.outfd != PIPES_PIPE) {
-				errno = EINVAL;
-				goto error;
-			}
+		if (ptr->pipes.infd == PIPES_PIPE && prev->pipes.outfd != PIPES_PIPE) {
+			errno = EINVAL;
+			goto error;
 		}
 		prev = ptr;
 	}
