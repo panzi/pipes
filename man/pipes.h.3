@@ -147,7 +147,7 @@ codes see \fBopen\fP(2), \fBpipe\fP(2), \fBdup2\fP(2), and \fBfork\fP(2).
 Close all pipes previously opened with \fBpipes_open\fP(). It is save to call this even if the
 \fBpipes_open\fP() call failed.
 
-Returns 0 on success, -1 if \fBclose(2)\fP on any of the file descriptors failed.
+Returns 0 on success, -1 if \fBclose\fP(2) on any of the file descriptors failed.
 
 .SS int pipes_open_chain(struct pipes_chain \fIchain\fP[])
 Spawn a number of child prcesses and open pipes between them. Intermediate pipes are
@@ -157,48 +157,57 @@ The last element of \fIchain\fP is marked by setting \fIargv\fP to NULL. \fIenvp
 and \fIpipes\fP must be initialized in the same way as for \fBpipes_open\fP().
 
 On success returns 0, on error returns -1 and sets \fBerrno\fP. In addition to the errors
-of \fBopen_pipes\fP()
+defined by \fBopen_pipes\fP() \fBerrno\fP will be set to \fBEINVAL\fP if \fIchain\fP is NULL
+or points to an empty array or if an element in the chain has \fIinfd\fP defined as
+\fBPIPES_PIPE\fP but the preceding element hasn't defined \fIoutfd\fP as \fBPIPES_PIPE\fP.
 
-.SS pipes_close_chain(struct pipes_chain \fIchain\fP[])
-Close all pipes in \fIchain\fP. It is save to call this even if the \fBpipes_open\fP() call
-failed.
+.SS int pipes_close_chain(struct pipes_chain \fIchain\fP[])
+Close all pipes in \fIchain\fP and sets them to -1. It is save to call this even if the
+\fBpipes_open\fP() call failed.
 
-.SS pipes_kill_chain(struct pipes_chain \fIchain\fP[], int \fIsig\fP)
+Returns 0 on success, -1 if \fBclose\fP(2) on any of the file descriptors failed.
+
+.SS int pipes_kill_chain(struct pipes_chain \fIchain\fP[], int \fIsig\fP)
 Send signal \fIsig\fP to all processes in \fIchain\fP.
+
+Returns 0 on success, -1 if \fBkill\fP(2) on any of the processes failed. It will still try
+to send the signal to the rest of the chain.
 
 .SS pipes_take_in(struct pipes_chain \fIchain\fP[])
 Return the pipe to the input stream pipe of the first process in the \fIchain\fP. The \fIinfd\fP
 field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close
 it.
 
+If the chain is empty -1 will be returned and \fBerrno\fP will be set to \fBEINVAL\fP. Note that
+-1 will also be returned if \fIinfd\fP of the first element is -1.
+
 .SS pipes_take_out(struct pipes_chain \fIchain\fP[])
 Return the pipe to the output stream pipe of the last process in the \fIchain\fP. The \fIoutfd\fP
 field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close it.
+
+If the chain is empty -1 will be returned and \fBerrno\fP will be set to \fBEINVAL\fP. Note that
+-1 will also be returned if \fIoutfd\fP of the last element is -1.
 
 .SS pipes_take_err(struct pipes_chain \fIchain\fP[])
 Return the pipe to the error stream pipe of the last process in the \fIchain\fP. The \fIerrfd\fP
 field in the chain will be set to -1 so a successive \fBpipes_close_chain\fP() call won't close it.
 
+If the chain is empty -1 will be returned and \fBerrno\fP will be set to \fBEINVAL\fP. Note that
+-1 will also be returned if \fIerrfd\fP of the last element is -1.
+
 .SS PIPES_GET_LAST(\fICHAIN\fP)
-Macro to get the last pipe in \fICHAIN\fP. \fICHAIN\fP must be an array, not a pointer.
+Macro to get the last pipe in \fICHAIN\fP. Note that \fICHAIN\fP must be an array, not a pointer.
 
 .SS PIPES_GET_IN(\fICHAIN\fP)
 Macro to get the input stream pipe of the first process in \fICHAIN\fP.
 
 .SS PIPES_GET_OUT(\fICHAIN\fP)
-Macro to get the output stream pipe of the last process in \fICHAIN\fP. \fICHAIN\fP must be an
-array, not a pointer.
+Macro to get the output stream pipe of the last process in \fICHAIN\fP. Note that \fICHAIN\fP
+must be an array, not a pointer.
 
 .SS PIPES_GET_ERR(\fICHAIN\fP)
-Macro to get the error stream pipe of the last process in \fICHAIN\fP. \fICHAIN\fP must be an
-array, not a pointer.
-
-.SH ERRORS
-TODO...
-
-.TP
-.B EINVAL
-TODO...
+Macro to get the error stream pipe of the last process in \fICHAIN\fP. Note that \fICHAIN\fP
+must be an array, not a pointer.
 
 .SH SOURCE
 Get the source at https://github.com/panzi/pipes
