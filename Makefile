@@ -5,9 +5,11 @@ PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
 INCDIR=$(PREFIX)/include
 
-.PHONY: lib all examples clean install uninstall
+.PHONY: lib all examples man clean install uninstall
 
 lib: libpipes.so
+
+man:
 
 all: lib examples
 
@@ -35,6 +37,7 @@ install: lib
 	ln -s libpipes.so "$(LIBDIR)/libpipes.so.1"
 	ln -s libpipes.so.1 "$(LIBDIR)/libpipes.so.1.0.0"
 	install pipes.h fpipes.h export.h "$(INCDIR)/pipes"
+	$(MAKE) -C man install
 
 uninstall:
 	rm -rv "$(LIBDIR)/libpipes.so.1.0.0" "$(LIBDIR)/libpipes.so.1" \

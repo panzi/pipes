@@ -39,7 +39,6 @@ Functions to build pipe chains between programs.
 .SS sctruct pipes
 
 .PP
-.in +4n
 .nf
 struct pipes {
 	pid_t pid;     /* process ID of opened child process */
@@ -48,7 +47,6 @@ struct pipes {
 	int   errfd;   /* pipe to stderr of child process    */
 };
 .fi
-.in
 
 The \fIinfd\fP, \fIoutfd\fP, and \fIerrfd\fP fields of \fIpipes\fP may either be set to valid
 file descriptors or to one of the following special values. In case they are file descriptors
@@ -116,7 +114,6 @@ last command in a chain.
 .SS struct pipes_chain
 
 .PP
-.in +4n
 .nf
 struct pipes_chain {
 	struct pipes       pipes;   /* see above                         */
@@ -124,7 +121,6 @@ struct pipes_chain {
 	char const* const* envp;    /* NULL terminated environment array */
 };
 .fi
-.in
 
 \fBpipes_chain_open\fP() accepts an array of \fBpipe_chain\fP structures. It passed the fields
 of each structure to an \fBpipes_open\fP() call.
