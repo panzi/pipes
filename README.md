@@ -8,6 +8,8 @@ on `FILE` objects.
 
 See the `examples` folder for small usage examples.
 
+Online [manpage](https://panzi.github.io/pipes/pipes.h.html).
+
 BSD License
 -----------
 Copyright (c) 2014 Mathias Panzenböck
