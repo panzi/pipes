@@ -24,13 +24,8 @@ void pipes_redirect_fd(int oldfd, int newfd, const char *msg);
 #endif
 
 static int pipes_temp_fd_fallback() {
-	char name[L_tmpnam];
-
-	if (tmpnam(name) == NULL) {
-		return -1;
-	}
-
-	int fd = open(name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	char name[] = P_tmpdir "/pipesXXXXXX";
+	const int fd = mkstemp(name);
 
 	if (fd < 0) {
 		return -1;

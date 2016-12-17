@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden -g
+CFLAGS=-Wall -Werror -Wextra -pedantic -std=c11 -O2 -fvisibility=hidden -g
 SOFLAGS=$(CFLAGS) -DPIPES_BUILDING_LIB -fPIC
 PREFIX=/usr/local
 LIBDIR=$(PREFIX)/lib
