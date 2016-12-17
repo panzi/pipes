@@ -1,0 +1,336 @@
+<HTML><HEAD><TITLE>Manpage of pipes.h</TITLE>
+</HEAD><BODY>
+<H1>pipes.h</H1>
+Section:  (3)<BR>Updated: 2014-09-09<BR><A HREF="#index">Index</A>
+<A HREF="/man/man2html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+pipes.h - build pipe chains
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<BR>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/pipes/pipes.h">pipes/pipes.h</A>&gt;</B>
+
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H3>Data Structures</H3>
+
+<PRE>
+struct <B>pipes</B>;
+struct <B>pipes_chain</B>;
+
+</PRE><A NAME="lbAE">&nbsp;</A>
+<H3>Functions</H3>
+
+<PRE>
+int <B>pipes_open</B>(char const *const <I>argv</I>[], char const *const <I>envp</I>[],
+               struct <B>pipes</B>* <I>pipes</I>);
+int <B>pipes_close</B>(struct <B>pipes</B>* <I>pipes</I>);
+
+int <B>pipes_open_chain</B>(struct <B>pipes_chain</B> <I>chain</I>[]);
+int <B>pipes_close_chain</B>(struct <B>pipes_chain</B> <I>chain</I>[]);
+int <B>pipes_kill_chain</B>(struct <B>pipes_chain</B> <I>chain</I>[], int <I>sig</I>);
+
+int <B>pipes_take_in</B>(struct <B>pipes_chain</B> <I>chain</I>[]);
+int <B>pipes_take_out</B>(struct <B>pipes_chain</B> <I>chain</I>[]);
+int <B>pipes_take_err</B>(struct <B>pipes_chain</B> <I>chain</I>[]);
+
+</PRE><A NAME="lbAF">&nbsp;</A>
+<H3>Macros</H3>
+
+<PRE>
+#define <B>PIPES_GET_LAST</B>(<I>CHAIN</I>)
+#define <B>PIPES_GET_IN</B>(<I>CHAIN</I>)
+#define <B>PIPES_GET_OUT</B>(<I>CHAIN</I>)
+#define <B>PIPES_GET_ERR</B>(<I>CHAIN</I>)
+
+</PRE><A NAME="lbAG">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Functions to build pipe chains between programs.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>sctruct pipes</H3>
+
+<P>
+<P>
+
+<PRE>
+struct pipes {
+        pid_t pid;     /* process ID of opened child process */
+        int   infd;    /* pipe to stdin of child process     */
+        int   outfd;   /* pipe to stdout of child process    */
+        int   errfd;   /* pipe to stderr of child process    */
+};
+</PRE>
+
+<P>
+The <I>infd</I>, <I>outfd</I>, and <I>errfd</I> fields of <I>pipes</I> may either be set to valid
+file descriptors or to one of the following special values. In case they are file descriptors
+they will be used as the appropriate stream in the child process and will be closed in the
+parent process. <B>pipes_open</B>() and <B>pipes_open_chain</B>() ensure that any passed file
+descriptor will be always closed, no matter if the call was successful or resulted in an error.
+<P>
+<DL COMPACT>
+<DT><B>PIPES_LEAVE</B>
+
+<DD>
+Leave stream unchaned (i.e. don't open a pipe to the stream of the child process).
+<P>
+<DT><B>PIPES_PIPE</B>
+
+<DD>
+Open a pipe to this stream of the child process. For <I>infd</I> the write end of the pipe will
+be returned in the same field. For <I>outfd</I> and <I>errfd</I> the read end of the pipe will
+be retuned in the same field.
+<P>
+<DT><B>PIPES_NULL</B>
+
+<DD>
+Pipe this stream to/from <I>/dev/null</I>.
+<P>
+<DT><B>PIPES_ERR_TO_OUT</B>
+
+<DD>
+Redirect child process stderr to stdout. This is only valid for the <I>errfd</I> field.
+<P>
+<DT><B>PIPES_TEMP</B>
+
+<DD>
+Open a temporary file as this stream. If supported by the kernel and filesystem this
+will be done using the <B>O_TMPFILE</B> flag. A copy of the file descriptor will be
+returned in the same field.
+<P>
+</DL>
+<P>
+
+These helper macros can be used to initialize the <I>pipes</I> structure:
+<P>
+<DL COMPACT>
+<DT><B>PIPES_PASS</B>
+
+<DD>
+Set <I>infd</I> and <I>outfd</I> to <B>PIPES_PIPE</B> and set <I>errfd</I> to <B>PIPES_LEAVE</B>.
+This is useful for intermediaries in a pipe chain.
+<P>
+<DT><B>PIPES_IN(</B><I>IN</I><B>)</B>
+
+<DD>
+Set <I>infd</I> to <I>IN</I>, <I>outfd</I> to <B>PIPES_PIPE</B> and <I>errfd</I> to
+<B>PIPES_LEAVE</B>.
+<P>
+<DT><B>PIPES_OUT(</B><I>OUT</I><B>)</B>
+
+<DD>
+Set <I>infd</I> to <B>PIPES_PIPE</B>, <I>outfd</I> to <I>OUT</I> and <I>errfd</I> to
+<B>PIPES_LEAVE</B>.
+<P>
+<DT><B>PIPES_ERR(</B><I>ERR</I><B>)</B>
+
+<DD>
+Set <I>infd</I> to <B>PIPES_PIPE</B>, <I>outfd</I> to <B>PIPES_LEAVE</B> and <I>errfd</I> to
+<I>ERR</I>.
+<P>
+<DT><B>PIPES_FIRST</B>
+
+<DD>
+Set <I>outfd</I> to <B>PIPES_PIPE</B> and the rest to <B>PIPES_LEAVE</B>. This is useful for
+the first command in a chain.
+<P>
+<DT><B>PIPES_LAST</B>
+
+<DD>
+Set <I>infd</I> to <B>PIPES_PIPE</B> and the rest to <B>PIPES_LEAVE</B>. This is useful for the
+last command in a chain.
+<P>
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>struct pipes_chain</H3>
+
+<P>
+<P>
+
+<PRE>
+struct pipes_chain {
+        struct pipes       pipes;   /* see above                         */
+        char const* const* argv;    /* NULL terminated argument array    */
+        char const* const* envp;    /* NULL terminated environment array */
+};
+</PRE>
+
+<P>
+<B>pipes_chain_open</B>() accepts an array of <B>pipe_chain</B> structures. It passed the fields
+of each structure to an <B>pipes_open</B>() call.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>int pipes_open(char const *const <I>argv</I>[], char const *const <I>envp</I>[], struct pipes* <I>pipes</I>);</H3>
+
+Spawn a child process and open pipes to it's io streams.
+<P>
+<I>argv</I> is a NULL terminated array of arguments. The first argument is the program to execute
+and does not need to be an absolute path.
+<P>
+<I>envp</I> is a NULL terminated array of environment variables. After forking, the child
+processes global <B>environ</B> variable will be set to this value. If <I>envp</I> is NULL it will
+be ignored. See also: <B><A HREF="/man/man2html?3+environ">environ</A></B>(3)
+<P>
+On success returns 0, on error returns -1 and sets <B>errno</B>. If <I>infd</I>, <I>outfd</I> or
+<I>errfd</I> has an illegal value <B>errno</B> is set to <B>EINVAL</B>. For other possible error
+codes see <B><A HREF="/man/man2html?2+open">open</A></B>(2), <B><A HREF="/man/man2html?2+pipe">pipe</A></B>(2), <B><A HREF="/man/man2html?2+dup2">dup2</A></B>(2), and <B><A HREF="/man/man2html?2+fork">fork</A></B>(2).
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H3>int pipes_close(struct pipes* <I>pipes</I>)</H3>
+
+Close all pipes previously opened with <B>pipes_open</B>(). It is save to call this even if the
+<B>pipes_open</B>() call failed.
+<P>
+Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+close">close</A></B>(2) on any of the file descriptors failed.
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H3>int pipes_open_chain(struct pipes_chain <I>chain</I>[])</H3>
+
+Spawn a number of child prcesses and open pipes between them. Intermediate pipes are
+not accessible by the calling process.
+<P>
+The last element of <I>chain</I> is marked by setting <I>argv</I> to NULL. <I>envp</I> can be NULL
+and <I>pipes</I> must be initialized in the same way as for <B>pipes_open</B>().
+<P>
+On success returns 0, on error returns -1 and sets <B>errno</B>. In addition to the errors
+defined by <B>open_pipes</B>() <B>errno</B> will be set to <B>EINVAL</B> if <I>chain</I> is NULL
+or points to an empty array or if an element in the chain has <I>infd</I> defined as
+<B>PIPES_PIPE</B> but the preceding element hasn't defined <I>outfd</I> as <B>PIPES_PIPE</B>.
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H3>int pipes_close_chain(struct pipes_chain <I>chain</I>[])</H3>
+
+Close all pipes in <I>chain</I> and sets them to -1. It is save to call this even if the
+<B>pipes_open_chain</B>() call failed.
+<P>
+Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+close">close</A></B>(2) on any of the file descriptors failed.
+<P>
+<A NAME="lbAN">&nbsp;</A>
+<H3>int pipes_kill_chain(struct pipes_chain <I>chain</I>[], int <I>sig</I>)</H3>
+
+Send signal <I>sig</I> to all processes in <I>chain</I>.
+<P>
+Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+kill">kill</A></B>(2) on any of the processes failed. It will still try
+to send the signal to the rest of the chain.
+<P>
+<A NAME="lbAO">&nbsp;</A>
+<H3>int pipes_take_in(struct pipes_chain <I>chain</I>[])</H3>
+
+Return the pipe to the input stream pipe of the first process in the <I>chain</I>. The <I>infd</I>
+field in the chain will be set to -1 so a successive <B>pipes_close_chain</B>() call won't close
+it.
+<P>
+If the chain is empty -1 will be returned and <B>errno</B> will be set to <B>EINVAL</B>. Note that
+-1 will also be returned if <I>infd</I> of the first element is -1.
+<P>
+<A NAME="lbAP">&nbsp;</A>
+<H3>int pipes_take_out(struct pipes_chain <I>chain</I>[])</H3>
+
+Return the pipe to the output stream pipe of the last process in the <I>chain</I>. The <I>outfd</I>
+field in the chain will be set to -1 so a successive <B>pipes_close_chain</B>() call won't close it.
+<P>
+If the chain is empty -1 will be returned and <B>errno</B> will be set to <B>EINVAL</B>. Note that
+-1 will also be returned if <I>outfd</I> of the last element is -1.
+<P>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>int pipes_take_err(struct pipes_chain <I>chain</I>[])</H3>
+
+Return the pipe to the error stream pipe of the last process in the <I>chain</I>. The <I>errfd</I>
+field in the chain will be set to -1 so a successive <B>pipes_close_chain</B>() call won't close it.
+<P>
+If the chain is empty -1 will be returned and <B>errno</B> will be set to <B>EINVAL</B>. Note that
+-1 will also be returned if <I>errfd</I> of the last element is -1.
+<P>
+<A NAME="lbAR">&nbsp;</A>
+<H3>PIPES_GET_LAST(<I>CHAIN</I>)</H3>
+
+Macro to get the last pipe in <I>CHAIN</I>. Note that <I>CHAIN</I> must be an array, not a pointer.
+<P>
+<A NAME="lbAS">&nbsp;</A>
+<H3>PIPES_GET_IN(<I>CHAIN</I>)</H3>
+
+Macro to get the input stream pipe of the first process in <I>CHAIN</I>.
+<P>
+<A NAME="lbAT">&nbsp;</A>
+<H3>PIPES_GET_OUT(<I>CHAIN</I>)</H3>
+
+Macro to get the output stream pipe of the last process in <I>CHAIN</I>. Note that <I>CHAIN</I>
+must be an array, not a pointer.
+<P>
+<A NAME="lbAU">&nbsp;</A>
+<H3>PIPES_GET_ERR(<I>CHAIN</I>)</H3>
+
+Macro to get the error stream pipe of the last process in <I>CHAIN</I>. Note that <I>CHAIN</I>
+must be an array, not a pointer.
+<P>
+<A NAME="lbAV">&nbsp;</A>
+<H2>SOURCE</H2>
+
+Get the source at <A HREF="https://github.com/panzi/pipes">https://github.com/panzi/pipes</A>
+<P>
+<A NAME="lbAW">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Mathias Panzenböck (<A HREF="mailto:grosser.meister.morti@gmx.net">grosser.meister.morti@gmx.net</A>)
+<P>
+<A NAME="lbAX">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="/man/man2html?3+environ">environ</A></B>(3),
+
+<B><A HREF="/man/man2html?3+execvp">execvp</A></B>(3),
+
+<B><A HREF="/man/man2html?2+fork">fork</A></B>(2),
+
+<B><A HREF="/man/man2html?2+pipe">pipe</A></B>(2),
+
+<B><A HREF="/man/man2html?3+popen">popen</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Data Structures</A><DD>
+<DT><A HREF="#lbAE">Functions</A><DD>
+<DT><A HREF="#lbAF">Macros</A><DD>
+</DL>
+<DT><A HREF="#lbAG">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAH">sctruct pipes</A><DD>
+<DT><A HREF="#lbAI">struct pipes_chain</A><DD>
+<DT><A HREF="#lbAJ">int pipes_open(char const *const <I>argv</I>[], char const *const <I>envp</I>[], struct pipes* <I>pipes</I>);</A><DD>
+<DT><A HREF="#lbAK">int pipes_close(struct pipes* <I>pipes</I>)</A><DD>
+<DT><A HREF="#lbAL">int pipes_open_chain(struct pipes_chain <I>chain</I>[])</A><DD>
+<DT><A HREF="#lbAM">int pipes_close_chain(struct pipes_chain <I>chain</I>[])</A><DD>
+<DT><A HREF="#lbAN">int pipes_kill_chain(struct pipes_chain <I>chain</I>[], int <I>sig</I>)</A><DD>
+<DT><A HREF="#lbAO">int pipes_take_in(struct pipes_chain <I>chain</I>[])</A><DD>
+<DT><A HREF="#lbAP">int pipes_take_out(struct pipes_chain <I>chain</I>[])</A><DD>
+<DT><A HREF="#lbAQ">int pipes_take_err(struct pipes_chain <I>chain</I>[])</A><DD>
+<DT><A HREF="#lbAR">PIPES_GET_LAST(<I>CHAIN</I>)</A><DD>
+<DT><A HREF="#lbAS">PIPES_GET_IN(<I>CHAIN</I>)</A><DD>
+<DT><A HREF="#lbAT">PIPES_GET_OUT(<I>CHAIN</I>)</A><DD>
+<DT><A HREF="#lbAU">PIPES_GET_ERR(<I>CHAIN</I>)</A><DD>
+</DL>
+<DT><A HREF="#lbAV">SOURCE</A><DD>
+<DT><A HREF="#lbAW">AUTHOR</A><DD>
+<DT><A HREF="#lbAX">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 21:16:21 GMT, December 17, 2016
+</BODY>
+</HTML>
