@@ -15,7 +15,7 @@ pipes.h - build pipe chains
 <BR>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/pipes/pipes.h">pipes/pipes.h</A>&gt;</B>
+<B>#include &lt;<A HREF="https://github.com/panzi/pipes/blob/master/pipes.h">pipes/pipes.h</A>&gt;</B>
 
 </PRE><A NAME="lbAD">&nbsp;</A>
 <H3>Data Structures</H3>
@@ -177,11 +177,11 @@ and does not need to be an absolute path.
 <P>
 <I>envp</I> is a NULL terminated array of environment variables. After forking, the child
 processes global <B>environ</B> variable will be set to this value. If <I>envp</I> is NULL it will
-be ignored. See also: <B><A HREF="/man/man2html?3+environ">environ</A></B>(3)
+be ignored. See also: <B><A HREF="https://linux.die.net/man/3/environ">environ</A></B>(3)
 <P>
 On success returns 0, on error returns -1 and sets <B>errno</B>. If <I>infd</I>, <I>outfd</I> or
 <I>errfd</I> has an illegal value <B>errno</B> is set to <B>EINVAL</B>. For other possible error
-codes see <B><A HREF="/man/man2html?2+open">open</A></B>(2), <B><A HREF="/man/man2html?2+pipe">pipe</A></B>(2), <B><A HREF="/man/man2html?2+dup2">dup2</A></B>(2), and <B><A HREF="/man/man2html?2+fork">fork</A></B>(2).
+codes see <B><A HREF="https://linux.die.net/man/2/open">open</A></B>(2), <B><A HREF="https://linux.die.net/man/2/pipe">pipe</A></B>(2), <B><A HREF="https://linux.die.net/man/2/dup2">dup2</A></B>(2), and <B><A HREF="https://linux.die.net/man/2/fork">fork</A></B>(2).
 <P>
 <A NAME="lbAK">&nbsp;</A>
 <H3>int pipes_close(struct pipes* <I>pipes</I>)</H3>
@@ -189,7 +189,7 @@ codes see <B><A HREF="/man/man2html?2+open">open</A></B>(2), <B><A HREF="/man/ma
 Close all pipes previously opened with <B>pipes_open</B>(). It is save to call this even if the
 <B>pipes_open</B>() call failed.
 <P>
-Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+close">close</A></B>(2) on any of the file descriptors failed.
+Returns 0 on success, -1 if <B><A HREF="https://linux.die.net/man/2/close">close</A></B>(2) on any of the file descriptors failed.
 <P>
 <A NAME="lbAL">&nbsp;</A>
 <H3>int pipes_open_chain(struct pipes_chain <I>chain</I>[])</H3>
@@ -211,14 +211,14 @@ or points to an empty array or if an element in the chain has <I>infd</I> define
 Close all pipes in <I>chain</I> and sets them to -1. It is save to call this even if the
 <B>pipes_open_chain</B>() call failed.
 <P>
-Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+close">close</A></B>(2) on any of the file descriptors failed.
+Returns 0 on success, -1 if <B><A HREF="https://linux.die.net/man/2/close">close</A></B>(2) on any of the file descriptors failed.
 <P>
 <A NAME="lbAN">&nbsp;</A>
 <H3>int pipes_kill_chain(struct pipes_chain <I>chain</I>[], int <I>sig</I>)</H3>
 
 Send signal <I>sig</I> to all processes in <I>chain</I>.
 <P>
-Returns 0 on success, -1 if <B><A HREF="/man/man2html?2+kill">kill</A></B>(2) on any of the processes failed. It will still try
+Returns 0 on success, -1 if <B><A HREF="https://linux.die.net/man/2/kill">kill</A></B>(2) on any of the processes failed. It will still try
 to send the signal to the rest of the chain.
 <P>
 <A NAME="lbAO">&nbsp;</A>
@@ -284,15 +284,15 @@ Mathias Panzenböck (<A HREF="mailto:grosser.meister.morti@gmx.net">grosser.meis
 <A NAME="lbAX">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="/man/man2html?3+environ">environ</A></B>(3),
+<B><A HREF="https://linux.die.net/man/3/environ">environ</A></B>(3),
 
-<B><A HREF="/man/man2html?3+execvp">execvp</A></B>(3),
+<B><A HREF="https://linux.die.net/man/3/execvp">execvp</A></B>(3),
 
-<B><A HREF="/man/man2html?2+fork">fork</A></B>(2),
+<B><A HREF="https://linux.die.net/man/2/fork">fork</A></B>(2),
 
-<B><A HREF="/man/man2html?2+pipe">pipe</A></B>(2),
+<B><A HREF="https://linux.die.net/man/2/pipe">pipe</A></B>(2),
 
-<B><A HREF="/man/man2html?3+popen">popen</A></B>(3)
+<B><A HREF="https://linux.die.net/man/3/popen">popen</A></B>(3)
 
 <P>
 
