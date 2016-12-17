@@ -128,7 +128,7 @@ of each structure to an \fBpipes_open\fP() call.
 .SS int pipes_open(char const *const \fIargv\fP[], char const *const \fIenvp\fP[], struct pipes* \fIpipes\fP);
 Spawn a child process and open pipes to it's io streams.
 
-\fIargv\fP is a NULL terminated array of arguments. The first one is the program to execute
+\fIargv\fP is a NULL terminated array of arguments. The first argument is the program to execute
 and does not need to be an absolute path.
 
 \fIenvp\fP is a NULL terminated array of environment variables. After forking, the child
@@ -159,7 +159,7 @@ or points to an empty array or if an element in the chain has \fIinfd\fP defined
 
 .SS int pipes_close_chain(struct pipes_chain \fIchain\fP[])
 Close all pipes in \fIchain\fP and sets them to -1. It is save to call this even if the
-\fBpipes_open\fP() call failed.
+\fBpipes_open_chain\fP() call failed.
 
 Returns 0 on success, -1 if \fBclose\fP(2) on any of the file descriptors failed.
 
