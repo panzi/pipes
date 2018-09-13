@@ -15,8 +15,9 @@ extern "C" {
 #define PIPES_LEAVE      -2
 #define PIPES_PIPE       -3
 #define PIPES_NULL       -4
-#define PIPES_ERR_TO_OUT -5
-#define PIPES_TEMP       -6
+#define PIPES_TO_STDOUT  -5
+#define PIPES_TO_STDERR  -6
+#define PIPES_TEMP       -7
 
 #define PIPES_PASS     {-1, PIPES_PIPE,  PIPES_PIPE,  PIPES_LEAVE}
 #define PIPES_IN(IN)   {-1, (IN),        PIPES_PIPE,  PIPES_LEAVE}

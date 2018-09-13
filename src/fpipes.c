@@ -100,6 +100,10 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 			goto error;
 		}
 	}
+	else if (outaction == FPIPES_TO_STDOUT || outaction == FPIPES_TO_STDERR) {
+		// see below
+		pipes->err = NULL;
+	}
 	else if (FPIPES_IS_FILE(outaction)) {
 		outfd = fileno(pipes->out);
 		
@@ -148,7 +152,7 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 			goto error;
 		}
 	}
-	else if (erraction == FPIPES_ERR_TO_OUT) {
+	else if (erraction == FPIPES_TO_STDOUT || erraction == FPIPES_TO_STDERR) {
 		// see below
 		pipes->err = NULL;
 	}
@@ -185,9 +189,19 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 
 	if (pid == 0) {
 		// child
-		pipes_redirect_fd(infd,  STDIN_FILENO,  "redirecting stdin");
-		pipes_redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
-		if (erraction == FPIPES_ERR_TO_OUT) {
+		pipes_redirect_fd(infd, STDIN_FILENO, "redirecting stdin");
+
+		if (outaction == FPIPES_TO_STDERR) {
+			if (dup2(STDERR_FILENO, STDOUT_FILENO) == -1) {
+				perror("redirecting stdout");
+				exit(EXIT_FAILURE);
+			}
+		}
+		else {
+			pipes_redirect_fd(outfd, STDERR_FILENO, "redirecting stdout");
+		}
+
+		if (erraction == FPIPES_TO_STDOUT) {
 			if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
 				perror("redirecting stderr");
 				exit(EXIT_FAILURE);

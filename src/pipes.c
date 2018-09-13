@@ -117,6 +117,9 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 			goto error;
 		}
 	}
+	else if (outaction == PIPES_TO_STDOUT || outaction == PIPES_TO_STDERR) {
+		// see below
+	}
 	else if (outaction > -1) {
 		outfd = outaction;
 		pipes->outfd = -1;
@@ -151,7 +154,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 			goto error;
 		}
 	}
-	else if (erraction == PIPES_ERR_TO_OUT) {
+	else if (erraction == PIPES_TO_STDOUT || erraction == PIPES_TO_STDERR) {
 		// see below
 	}
 	else if (erraction > -1) {
@@ -179,9 +182,19 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 
 	if (pid == 0) {
 		// child
-		pipes_redirect_fd(infd,  STDIN_FILENO,  "redirecting stdin");
-		pipes_redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
-		if (erraction == PIPES_ERR_TO_OUT) {
+		pipes_redirect_fd(infd, STDIN_FILENO, "redirecting stdin");
+
+		if (outaction == PIPES_TO_STDERR) {
+			if (dup2(STDERR_FILENO, STDOUT_FILENO) == -1) {
+				perror("redirecting stdout");
+				exit(EXIT_FAILURE);
+			}
+		}
+		else {
+			pipes_redirect_fd(outfd, STDERR_FILENO, "redirecting stdout");
+		}
+
+		if (erraction == PIPES_TO_STDOUT) {
 			if (dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
 				perror("redirecting stderr");
 				exit(EXIT_FAILURE);

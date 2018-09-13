@@ -16,8 +16,9 @@ extern "C" {
 #define FPIPES_LEAVE      ((FILE*)1)
 #define FPIPES_PIPE       ((FILE*)2)
 #define FPIPES_NULL       ((FILE*)3)
-#define FPIPES_ERR_TO_OUT ((FILE*)4)
-#define FPIPES_TEMP       ((FILE*)5)
+#define FPIPES_TO_STDOUT  ((FILE*)4)
+#define FPIPES_TO_STDERR  ((FILE*)5)
+#define FPIPES_TEMP       ((FILE*)6)
 
 #define FPIPES_PASS     {-1, FPIPES_PIPE,  FPIPES_PIPE,  FPIPES_LEAVE}
 #define FPIPES_IN(IN)   {-1, (IN),         FPIPES_PIPE,  FPIPES_LEAVE}
