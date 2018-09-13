@@ -1,47 +1,49 @@
 CC=gcc
-CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden -g -I..
+CFLAGS=-Wall -Werror -Wextra -pedantic -std=c99 -O2 -fvisibility=hidden -g -I../src
+BUILD_DIR=../build/examples
 
 .PHONY: all clean
 
-all: chain fchain temp ftemp
+all: $(BUILD_DIR)/chain $(BUILD_DIR)/fchain $(BUILD_DIR)/temp $(BUILD_DIR)/ftemp
 
-chain: chain.o pipes.o redirect.o ../pipes.h
-	$(CC) $(CFLAGS) chain.o pipes.o redirect.o -o $@
+$(BUILD_DIR)/chain: $(BUILD_DIR)/chain.o $(BUILD_DIR)/pipes.o $(BUILD_DIR)/redirect.o ../src/pipes.h
+	$(CC) $(CFLAGS) $(BUILD_DIR)/chain.o $(BUILD_DIR)/pipes.o $(BUILD_DIR)/redirect.o -o $@
 
-chain.o: chain.c ../pipes.h
+$(BUILD_DIR)/chain.o: chain.c ../src/pipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-fchain: fchain.o fpipes.o redirect.o ../fpipes.h
-	$(CC) $(CFLAGS) fchain.o fpipes.o redirect.o -o $@
+$(BUILD_DIR)/fchain: $(BUILD_DIR)/fchain.o $(BUILD_DIR)/fpipes.o $(BUILD_DIR)/redirect.o ../src/fpipes.h
+	$(CC) $(CFLAGS) $(BUILD_DIR)/fchain.o $(BUILD_DIR)/fpipes.o $(BUILD_DIR)/redirect.o -o $@
 
-fchain.o: fchain.c ../fpipes.h
+$(BUILD_DIR)/fchain.o: fchain.c ../src/fpipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-temp: temp.o pipes.o redirect.o ../pipes.h
-	$(CC) $(CFLAGS) temp.o pipes.o redirect.o -o $@
+$(BUILD_DIR)/temp: $(BUILD_DIR)/temp.o $(BUILD_DIR)/pipes.o $(BUILD_DIR)/redirect.o ../src/pipes.h
+	$(CC) $(CFLAGS) $(BUILD_DIR)/temp.o $(BUILD_DIR)/pipes.o $(BUILD_DIR)/redirect.o -o $@
 
-temp.o: temp.c ../pipes.h
+$(BUILD_DIR)/temp.o: temp.c ../src/pipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-ftemp: ftemp.o fpipes.o redirect.o ../pipes.h
-	$(CC) $(CFLAGS) ftemp.o fpipes.o redirect.o -o $@
+$(BUILD_DIR)/ftemp: $(BUILD_DIR)/ftemp.o $(BUILD_DIR)/fpipes.o $(BUILD_DIR)/redirect.o ../src/pipes.h
+	$(CC) $(CFLAGS) $(BUILD_DIR)/ftemp.o $(BUILD_DIR)/fpipes.o $(BUILD_DIR)/redirect.o -o $@
 
-ftemp.o: ftemp.c ../pipes.h
+$(BUILD_DIR)/ftemp.o: ftemp.c ../src/pipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-pipes.o: ../pipes.c ../pipes.h
+$(BUILD_DIR)/pipes.o: ../src/pipes.c ../src/pipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-fpipes.o: ../fpipes.c ../fpipes.h
+$(BUILD_DIR)/fpipes.o: ../src/fpipes.c ../src/fpipes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-redirect.o: ../redirect.c
+$(BUILD_DIR)/redirect.o: ../src/redirect.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm chain chain.o fchain fchain.o temp temp.o ftemp ftemp.o \
-	   pipes.o fpipes.o redirect.o
+	rm chain $(BUILD_DIR)/chain.o $(BUILD_DIR)/fchain $(BUILD_DIR)/fchain.o $(BUILD_DIR)/temp \
+	   $(BUILD_DIR)/temp.o $(BUILD_DIR)/ftemp $(BUILD_DIR)/ftemp.o \
+	   $(BUILD_DIR)/pipes.o $(BUILD_DIR)/fpipes.o $(BUILD_DIR)/redirect.o
