@@ -191,7 +191,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 			}
 		}
 		else {
-			pipes_redirect_fd(outfd, STDERR_FILENO, "redirecting stdout");
+			pipes_redirect_fd(outfd, STDOUT_FILENO, "redirecting stdout");
 		}
 
 		if (erraction == PIPES_TO_STDOUT) {
