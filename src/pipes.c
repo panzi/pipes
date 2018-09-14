@@ -250,7 +250,6 @@ int pipes_close(struct pipes* pipes) {
 			status = -1;
 		}
 		pipes->infd = -1;
-		status = -1;
 	}
 
 	if (pipes->outfd > -1) {
