@@ -182,6 +182,23 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 
 	if (pid == 0) {
 		// child
+
+		// close unused ends
+		if (pipes->infd > -1 && pipes->infd != infd) {
+			close(pipes->infd);
+			pipes->infd = -1;
+		}
+
+		if (pipes->outfd > -1 && pipes->outfd != outfd) {
+			close(pipes->outfd);
+			pipes->outfd = -1;
+		}
+
+		if (pipes->errfd > -1 && pipes->errfd != errfd) {
+			close(pipes->errfd);
+			pipes->errfd = -1;
+		}
+
 		pipes_redirect_fd(infd, STDIN_FILENO, "redirecting stdin");
 
 		if (outaction == PIPES_TO_STDERR) {

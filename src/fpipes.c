@@ -189,6 +189,23 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 
 	if (pid == 0) {
 		// child
+
+		// close unused ends
+		if (pipes->in != NULL && fileno(pipes->in) != infd) {
+			fclose(pipes->in);
+			pipes->in = NULL;
+		}
+
+		if (pipes->out != NULL && fileno(pipes->out) != outfd) {
+			fclose(pipes->out);
+			pipes->out = NULL;
+		}
+
+		if (pipes->err != NULL && fileno(pipes->err) != errfd) {
+			fclose(pipes->err);
+			pipes->err = NULL;
+		}
+
 		pipes_redirect_fd(infd, STDIN_FILENO, "redirecting stdin");
 
 		if (outaction == FPIPES_TO_STDERR) {
