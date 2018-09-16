@@ -12,7 +12,8 @@ Online [manpage](https://panzi.github.io/pipes/pipes.h.html).
 
 BSD License
 -----------
-Copyright (c) 2014 Mathias Panzenb�ck
+
+Copyright © 2014 Mathias Panzenböck
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
