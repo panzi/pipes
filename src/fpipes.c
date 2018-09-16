@@ -1,4 +1,5 @@
 #define _POSIX_SOURCE
+#define _GNU_SOURCE
 
 #include "fpipes.h"
 
@@ -32,7 +33,7 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 	// stdin
 	if (inaction == FPIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 
@@ -80,7 +81,7 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 	// stdout
 	if (outaction == FPIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 
@@ -132,7 +133,7 @@ int fpipes_open(char const *const argv[], char const *const envp[], struct fpipe
 	// stderr
 	if (erraction == FPIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 

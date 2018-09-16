@@ -69,7 +69,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	// stdin
 	if (inaction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 
@@ -103,7 +103,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	// stdout
 	if (outaction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 
@@ -140,7 +140,7 @@ int pipes_open(char const *const argv[], char const *const envp[], struct pipes*
 	// stderr
 	if (erraction == PIPES_PIPE) {
 		int pair[] = {-1, -1};
-		if (pipe(pair) == -1) {
+		if (pipe2(pair, O_CLOEXEC) == -1) {
 			goto error;
 		}
 
