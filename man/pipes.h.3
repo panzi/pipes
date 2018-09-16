@@ -69,8 +69,14 @@ be retuned in the same field.
 Pipe this stream to/from \fI/dev/null\fP.
 
 .TP
-.B PIPES_ERR_TO_OUT
-Redirect child process stderr to stdout. This is only valid for the \fIerrfd\fP field.
+.B PIPES_TO_STDOUT
+Redirect child process stream to stdout. This is only valid for the \fIoutfd\fP and \fIerrfd\fP
+fields. For \fIoutfd\fP it is equivalent to \fIPIPES_PIPE\fP.
+
+.TP
+.B PIPES_TO_STDERR
+Redirect child process stream to stdout. This is only valid for the \fIoutfd\fP and \fIerrfd\fP
+fields. For \fIerrfd\fP it is equivalent to \fIPIPES_PIPE\fP.
 
 .TP
 .B PIPES_TEMP
@@ -216,5 +222,5 @@ Mathias Panzenböck (grosser.meister.morti@gmx.net)
 .BR environ (3),
 .BR execvp (3),
 .BR fork (2),
-.BR pipe (2),
+.BR pipe2 (2),
 .BR popen (3)
