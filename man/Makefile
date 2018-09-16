@@ -1,4 +1,3 @@
-MAN2HTML=man2html
 MANDIR=$(PREFIX)/share/man
 
 .PHONY: all html clean install uninstall
@@ -7,8 +6,8 @@ all: html
 
 html: pipes.h.html
 
-pipes.h.html: pipes.h.3
-	$(MAN2HTML) ./pipes.h.3 | tail -n +3 > $@
+pipes.h.html: pipes.h.3 Makefile
+	./man2html.py ./pipes.h.3 $@
 
 clean:
 	rm -r pipes.h.html
